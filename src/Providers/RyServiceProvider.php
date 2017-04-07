@@ -42,6 +42,8 @@ class RyServiceProvider extends ServiceProvider
     	$this->map();
     	//$kernel = $this->app['Illuminate\Contracts\Http\Kernel'];
     	//$kernel->pushMiddleware('Ry\Facebook\Http\Middleware\Facebook');
+    	
+    	$this->app['router']->middleware('admin', '\Ry\Admin\Http\Middleware\Administration');
     }
 
     /**
@@ -51,6 +53,7 @@ class RyServiceProvider extends ServiceProvider
      */
     public function register()
     {
+    	
     }
     public function map()
     {    	
