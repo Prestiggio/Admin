@@ -4,6 +4,7 @@ namespace Ry\Admin\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
+use Ry\Admin\Console\Commands\Admin;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -53,7 +54,10 @@ class RyServiceProvider extends ServiceProvider
      */
     public function register()
     {
-    	
+    	$this->app->singleton("rygame.admin", function($app){
+    		return new Admin();
+    	});
+    	$this->commands("rygame.admin");
     }
     public function map()
     {    	
