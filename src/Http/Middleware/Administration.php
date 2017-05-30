@@ -15,8 +15,11 @@ class Administration {
 	{
 		$user = auth()->user();
 		
+		if(!$user)
+			return redirect()->guest('login');
+		
 		if(!$user->isAdmin()) {
-			return redirect("/vip.php");
+			return redirect("/");
 		}
 		
 		return $next($request);

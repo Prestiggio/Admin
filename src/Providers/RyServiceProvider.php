@@ -62,7 +62,7 @@ class RyServiceProvider extends ServiceProvider
     public function map()
     {    	
     	if (! $this->app->routesAreCached()) {
-    		$this->app['router']->group(['namespace' => 'Ry\Admin\Http\Controllers'], function(){
+    		$this->app['router']->group(['namespace' => 'Ry\Admin\Http\Controllers', 'middleware' => 'web'], function(){
     			require __DIR__.'/../Http/routes.php';
     		});
     	}
