@@ -5,6 +5,7 @@ namespace Ry\Admin\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Ry\Admin\Console\Commands\Admin;
+use Ry\Admin\Console\Commands\UserZero;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -58,6 +59,10 @@ class RyServiceProvider extends ServiceProvider
     		return new Admin();
     	});
     	$this->commands("rygame.admin");
+    	$this->app->singleton("rygame.user0", function($app){
+    		return new UserZero();
+    	});
+    	$this->commands("rygame.user0");
     }
     public function map()
     {    	
