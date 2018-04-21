@@ -65,12 +65,10 @@ class Admin extends Command {
 			$me = $user->first();
 			if($me->isAdmin())
 				return $this->info("Vous etes deja administrateur. Merci :)");
-			
-			Model::unguard();
 			$me->roles()->create([
 					"name" => "admin"
 			]);
-			Model::reguard();
+			
 			
 			return $this->info("Vous etes passe au role d'administrateur - Merci :)");
 		}

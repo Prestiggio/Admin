@@ -73,7 +73,6 @@ class UserZero extends Command {
 			$user = User::where("email", "=", $credentials["email"]);
 		}
 		
-		Model::unguard();
 		$user = User::create([
 			"name" => $credentials["name"],
 			"email" => $credentials["email"],
@@ -82,7 +81,7 @@ class UserZero extends Command {
 		$user->roles()->create([
 					"name" => "admin"
 			]);
-		Model::reguard();
+		
 		return $this->info("Vous etes passe au role d'administrateur - Merci :)");
 	}
 
