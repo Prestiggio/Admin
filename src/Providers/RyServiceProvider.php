@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Ry\Admin\Console\Commands\Admin;
 use Ry\Admin\Console\Commands\UserZero;
+use Ry\Admin\Http\Middleware\Administration;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -16,7 +17,6 @@ class RyServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-    	parent::boot();
     	/*
     	$this->publishes([    			
     			__DIR__.'/../config/ryadmin.php' => config_path('ryadmin.php')
@@ -44,8 +44,6 @@ class RyServiceProvider extends ServiceProvider
     	$this->map();
     	//$kernel = $this->app['Illuminate\Contracts\Http\Kernel'];
     	//$kernel->pushMiddleware('Ry\Facebook\Http\Middleware\Facebook');
-    	
-    	$this->app['router']->middleware('admin', '\Ry\Admin\Http\Middleware\Administration');
     }
 
     /**
@@ -55,6 +53,9 @@ class RyServiceProvider extends ServiceProvider
      */
     public function register()
     {
+    	$this->app->singleton("admin", function(){
+    		return new Administration();
+    	});
     	$this->app->singleton("rygame.admin", function($app){
     		return new Admin();
     	});
@@ -67,6 +68,7 @@ class RyServiceProvider extends ServiceProvider
     public function map()
     {    	
     	if (! $this->app->routesAreCached()) {
+    		//$this->app['router']->middleware('admin', '\Ry\Admin\Http\Middleware\Administration');
     		$this->app['router']->group(['namespace' => 'Ry\Admin\Http\Controllers', 'middleware' => 'web'], function(){
     			require __DIR__.'/../Http/routes.php';
     		});
