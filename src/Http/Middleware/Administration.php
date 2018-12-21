@@ -1,28 +1,25 @@
 <?php namespace Ry\Admin\Http\Middleware;
 
-use Closure;
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
 
-class Administration {
+class Administration extends Middleware
+{
 
-	/**
-	 * Handle an incoming request.
-	 *
-	 * @param  \Illuminate\Http\Request  $request
-	 * @param  \Closure  $next
-	 * @return mixed
-	 */
-	public function handle($request, Closure $next)
-	{
-		$user = auth()->user();
-		
-		if(!$user)
-			return redirect()->guest('login');
-		
-		if(!$user->isAdmin()) {
-			return redirect("/");
-		}
-		
-		return $next($request);
-	}
+    protected function redirectTo($request)
+    {
+        if (! $request->expectsJson()) {
+            if(!preg_match('/^admin\./i', $request->getHost()))
+                return '/admin/login';
+        }
+        
+        $user = auth('admin')->user();
+        
+        if(!$user)
+            return '/login';
+            
+        if(!$user->isAdmin()) {
+            return "/";
+        }
+    }
 
 }

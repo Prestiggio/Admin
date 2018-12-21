@@ -38,7 +38,7 @@ class Admin extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$use_trait = array_has(class_uses(User::class), "Ry\Admin\Models\Traits\AdministratorTrait");
 		while(!$use_trait) {
