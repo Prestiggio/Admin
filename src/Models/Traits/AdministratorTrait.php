@@ -1,6 +1,8 @@
 <?php
 namespace Ry\Admin\Models\Traits;
 
+use Ry\Admin\Models\Role;
+
 trait AdministratorTrait
 {
 	public function isAdmin() {
@@ -8,6 +10,8 @@ trait AdministratorTrait
 	}
 	
 	public function roles() {
-		return $this->hasMany("Ry\Admin\Models\Role", "user_id");
+	    return $this->belongsToMany(Role::class, 'ry_admin_user_roles', 'user_id', 'role_id');
 	}
+	
+	
 }
