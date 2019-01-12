@@ -113,13 +113,14 @@ class AdminController extends Controller
             "languages" => "fr"
         ]);
         
-        $request->file('photo')->storeAs($path, $name)
+        $filename = time() . $request->file('photo')->getClientOriginalName();
+        $request->file('photo')->move(public_path('uploads'), $filename);
         
         if(isset($user["photo"])) {
             $_user->medias()->create([
                 'owner_id' => $_user->id,
-                'title' => $user['photo'],
-                'path' => $user['photo'],
+                'title' => $filename,
+                'path' => $filename,
                 'type' => 'image'
             ]);
         }
@@ -130,6 +131,10 @@ class AdminController extends Controller
             "all" => $request->all(),
             "files" => $request->file('photo')
         ];
+    }
+    
+    public function delete_users(Request $request) {
+        User::find($request->get('id'))->delete();
     }
     
     public function get_logout() {
