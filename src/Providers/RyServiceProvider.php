@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 use Ry\Admin\Models\Permission;
 use App\User;
 use Illuminate\Support\Facades\Cache;
+use Ry\Admin\Console\Commands\RegisterLayoutSection;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -140,6 +141,7 @@ HERE;
         });
         
         View::composer(
+            'ryadmin::*', AuthComposer::class,
             'rymanager::*', AuthComposer::class,
             'manager::*', AuthComposer::class
         );
@@ -163,6 +165,10 @@ HERE;
     		return new UserZero();
     	});
     	$this->commands("rygame.user0");
+    	$this->app->singleton("ryadmin.section", function($app){
+    	    return new RegisterLayoutSection();
+    	});
+    	$this->commands("ryadmin.section");
     }
     public function map()
     {    	

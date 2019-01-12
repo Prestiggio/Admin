@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
 use Ry\Admin\Models\LanguageTranslation;
 use Ry\Admin\Models\Permission;
-use App;
+use App, Auth;
+use Ry\Admin\Models\Language;
 
 trait LanguageTranslationController
 {
@@ -77,12 +78,60 @@ trait LanguageTranslationController
     }
     
     public function delete_traductions(Request $request) {
-        $this->authorize('ryadmin.language_translation.*');
+        Permission::authorize('ryadmin.language_translation.*');
         LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))->delete();
     }
     
-    public function post_languages(Request $request) {
-        return view("$this->theme::dialogs.languages");
+    public function post_traductions_add(Request $request) {
+        $me = Auth::user();
+        $presets = [];
+        foreach($me->preference->ardata["languages_group"] as $k => $v) {
+            $presets[] = [
+                "name" => $k,
+                "languages" => $v 
+            ];
+        }
+        return view("$this->theme::dialogs.languages", [
+            "languages" => Language::whereNotNull("code")->where('code', '<>', App::getLocale())->get(),
+            "presets" => [
+                "locale" => App::getLocale(),
+                "presets" => $presets
+            ]
+        ]);
+    }
+    
+    public function post_traductions_insert(Request $request) {
+        $ar = $request->all();
+        $lt = 0;
+        $presets = [App::getLocale()];
+        $me = Auth::user();
+        foreach($ar['lang'] as $k => $v) {
+            if($v!='') {
+                if(!$lt) {
+                    if(LanguageTranslation::where("translation_string", "LIKE", $ar['lang'][App::getLocale()])->exists())
+                        return abort(409, __("Cette traduction existe déjà !"));
+                    
+                    $lt = DB::table("ry_admin_language_translations")->selectRaw("MAX(translation_id) AS lastid")->first();
+                }
+                $t = new LanguageTranslation();
+                $t->translation_id = $lt->lastid + 1;
+                $t->lang = $k;
+                $t->translation_string = $v;
+                $t->save();
+                
+                if($k!=App::getLocale()) {
+                    $presets[] = $k;
+                }
+            }
+        }
+        LanguageTranslation::writeToFiles();
+        if(isset($ar['preset']) && $ar['preset']!='') {
+            $preference = $me->preference()->firstOrCreate(['data' => json_encode(['languages_group' => $presets])]);
+            $preference->ardata = ['languages_group' => [
+                $ar['preset'] => $presets
+            ]];
+            $preference->save();
+        }
     }
 }
 ?>

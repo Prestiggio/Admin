@@ -35,11 +35,8 @@
         </div>
     </div>
     <nav class="navbar fixed-bottom navbar-dark bg-dark">
-    	<script type="application/json+ryAdminTools">{!!json_encode($page)!!}</script>
+    	<script type="application/json+ryAdminTools" id="adminfooter">{!!json_encode(['admin' => $admin, 'page' => $page])!!}</script>
     </nav>
-    <div>
-    	<script type="application/json+ryCore">{"nada":"nada"}</script>
-    </div>
     <script type="text/javascript" src="{{env('APP_URL')}}:3000/admin.amelior.js"></script>
 </body>
 @stop

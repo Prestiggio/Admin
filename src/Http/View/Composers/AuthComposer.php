@@ -3,6 +3,8 @@ namespace Ry\Admin\Http\View\Composers;
 
 use Illuminate\View\View;
 use Auth;
+use Ry\Admin\Models\Layout\Layout;
+use Ry\Admin\Models\Layout\LayoutSection;
 
 class AuthComposer
 {
@@ -14,7 +16,28 @@ class AuthComposer
     
     public function compose(View $view) {
         $view->with('user', $this->me);
-        $view->with('menu', [
+        $view->with('admin', [
+            [
+                'title' => __('Autorisations et raccourcis'),
+                'icon' => 'fa fa-shield-alt',
+                'href' => '#dialog/menus'
+            ],
+            [
+                'title' => __('Traductions'),
+                'icon' => 'fa fa-language',
+                'href' => '/traductions'
+            ]
+        ]);
+        if($this->me) {
+            $guard = $this->me->guard;
+            $sections = LayoutSection::whereHas("layout", function($q)use($guard){
+                $q->where("name", "=", $guard);
+            })->get();
+            foreach($sections as $section) {
+                $view->with($section->name, $section->setup);
+            }
+        }
+        $view->with('menuka', [
             [
                 "title" => "Tableau de bord",
                 "href" => "/",
@@ -46,6 +69,7 @@ class AuthComposer
                             ],
                             [
                                 "title" => "Ajouter utilisateur",
+                                "icon" => "fa fa-cogs",
                                 "children" => [
                                     [
                                         "title" => "Votre profil",

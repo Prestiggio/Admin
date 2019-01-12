@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 use App\User;
+use Ry\Admin\Models\Layout\Layout;
+use Ry\Admin\Models\Layout\RoleLayout;
 
 class Role extends Model {
 
@@ -14,6 +16,7 @@ class Role extends Model {
 	    'active' => 'bool',
 	    'level' => 'int',
 	];
+	protected $hidden = ['created_at', 'updated_at'];
 	
 	public function users() {
 		return $this->belongsToMany(User::class, "ry_admin_user_roles", "role_id", "user_id");
@@ -21,6 +24,14 @@ class Role extends Model {
 	
 	public function permissions() {
 	    return $this->belongsToMany(Permission::class, 'ry_admin_role_permissions', 'role_id', 'permission_id');
+	}
+	
+	public function layouts() {
+	    return $this->belongsToMany(Layout::class, "ry_admin_role_layouts", "layout_id", "role_id");
+	}
+	
+	public function layoutOverrides() {
+	    return $this->hasMany(RoleLayout::class);
 	}
 
 }
