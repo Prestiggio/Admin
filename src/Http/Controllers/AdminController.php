@@ -28,7 +28,7 @@ class AdminController extends Controller
         if(!$action)
             return $this->get_dashboard($request);
         $action = str_replace('-', '_', $action);
-        $action = $request->getMethod() . '_' . $action;
+        $action = strtolower($request->getMethod()) . '_' . $action;
         if($action!='' && method_exists($this, $action))
             return $this->$action($request);
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
@@ -77,15 +77,28 @@ class AdminController extends Controller
         ]);
     }
     
-    public function post_add_user(Request $request) {
-        return view("ryadmin::bs.add_user");
+    public function get_add_user(Request $request) {
+        return view("ryadmin::bs.add_user", $request->all());
     }
     
     public function get_users(Request $request) {
         $permission = Permission::authorize($this);
-        $users = User::with(["medias", "contacts", "roles"])->where("guard", "=", "manager")->paginate(10);
+        $query = User::with(["medias", "contacts", "roles"]);
+        if($request->has("roles")) {
+            $query->whereHas("roles", function($q) use ($request){
+                $q->whereIn("ry_admin_roles.id", $request->get("roles"));
+            });
+        }
+        else {
+            $query->where("guard", "=", "manager");
+        }
+        $users = $query->paginate(10);
+        $ar = array_merge([
+            'guard' => ['manager'],
+            'roles' => [2]
+        ], $request->all());
         return view("ryadmin::bs.users", [
-            "users" => $users,
+            "users" => array_merge($users->toArray(), $ar),
             "page" => [
                 "title" => "Liste des utilisateurs",
                 "href" => "/users",
@@ -99,7 +112,7 @@ class AdminController extends Controller
         $user = $request->all();
         
         $_user = new User();
-        $_user->guard = "manager";
+        $_user->guard = $user['guard'];
         $_user->name = $user['profile']["firstname"]." ".$user['profile']["lastname"];
         $_user->email = $user["email"];
         $_user->password = Hash::make($user['password']);
@@ -131,6 +144,41 @@ class AdminController extends Controller
             "all" => $request->all(),
             "files" => $request->file('photo')
         ];
+    }
+    
+    public function get_edit_user($user_id) {
+        return view("ryadmin::bs.edit_user", ['row' => User::with(["medias", "contacts", "roles"])->find($user_id)]);
+    }
+    
+    public function post_update_user(Request $request) {
+        $ar = $request->all();
+        $_user = User::find($ar['id']);
+        $_user->email = $ar['email'];
+        $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
+        $_user->save();
+        
+        $_user->profile()->update($ar['profile']);
+        
+        if($request->hasFile('photo')) {
+            foreach($_user->medias as $media) {
+                unlink(public_path('uploads').'/'.$media->path);
+            }
+            $_user->medias()->delete();
+            
+            $filename = time() . $request->file('photo')->getClientOriginalName();
+            $request->file('photo')->move(public_path('uploads'), $filename);
+            
+            $_user->medias()->create([
+                'owner_id' => $_user->id,
+                'title' => $filename,
+                'path' => $filename,
+                'type' => 'image'
+            ]);
+        }
+        
+        app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
+        
+        return User::with(["medias", "contacts", "roles"])->find($_user->id);
     }
     
     public function delete_users(Request $request) {

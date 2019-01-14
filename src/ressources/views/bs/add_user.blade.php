@@ -73,6 +73,8 @@
 			</div>
       </div>
       <div class="modal-footer">
+      	<input type="hidden" name="guard" value="{{$guard}}"/>
+      	<input type="hidden" name="roles" value="{{$roles}}"/>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
       </div>

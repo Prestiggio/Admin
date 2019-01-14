@@ -20,7 +20,8 @@ class AuthComposer
             [
                 'title' => __('Autorisations et raccourcis'),
                 'icon' => 'fa fa-shield-alt',
-                'href' => '#dialog/menus'
+                'href' => '#dialog/menus',
+                'data' => 'page'
             ],
             [
                 'title' => __('Traductions'),

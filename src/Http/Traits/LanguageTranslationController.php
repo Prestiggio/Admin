@@ -82,7 +82,7 @@ trait LanguageTranslationController
         LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))->delete();
     }
     
-    public function post_traductions_add(Request $request) {
+    public function get_traductions_add(Request $request) {
         $me = Auth::user();
         $presets = [];
         foreach($me->preference->ardata["languages_group"] as $k => $v) {
