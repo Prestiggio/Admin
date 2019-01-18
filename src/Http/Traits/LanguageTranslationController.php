@@ -3,60 +3,38 @@ namespace Ry\Admin\Http\Traits;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\Paginator;
 use Ry\Admin\Models\LanguageTranslation;
 use Ry\Admin\Models\Permission;
 use App, Auth;
 use Ry\Admin\Models\Language;
+use Ry\Admin\Models\Translation;
 
 trait LanguageTranslationController
 {
     public function get_traductions(Request $request) {
-        $langs = DB::table("ry_admin_language_translations")->selectRaw("DISTINCT(lang)")->get();
-        $locale = App::getLocale();
-        $languages = [];
-        $i = 1;
-        $fields = [];
-        $joins = [];
         $perPage = 10;
-        $page = $request->get('page', 1);
-        $offset = ($page * $perPage) - $perPage;
-        foreach($langs as $lang) {
-            if($locale != $lang->lang) {
-                $languages[$lang->lang] = [];
-                $fields[] = "t$i.translation_string AS " . $lang->lang;
-                $joins[] = "LEFT JOIN ry_admin_language_translations t$i ON t$i.translation_id = t0.translation_id AND t$i.lang = '".$lang->lang."'";
-                $i++;
-            }
+        if($request->has("s") && $request->get('s')!='') {
+            $translation_query = Translation::whereHas('meanings', function($q)use($request){
+                $q->where('translation_string', 'LIKE', '%'.$request->get('s').'%');
+            })->orderBy('code');
         }
-        $wheres = ["t0.lang = 'fr'"];
-        $bindings = ['offset' => $offset, 'limit' => $perPage];
-        if($request->has("s")) {
-            $orwheres = [];
-            $i = 0;
-            foreach($langs as $lang) {
-                $orwheres[] = "t$i.translation_string LIKE :s$i";
-                $bindings['s'.$i] = '%'.$request->get('s').'%';
-                $i++;
-            }
-            $wheres[] = "(" . implode(" OR ", $orwheres) . ")";
+        else {
+            $translation_query = Translation::orderBy('code');
         }
-        $query = "SELECT t0.translation_id, t0.translation_string AS fr, ".implode(",", $fields)."
-                FROM `ry_admin_language_translations` t0
-                ".implode(" ", $joins)."
-                WHERE ".implode(" AND ", $wheres)." ORDER BY t0.translation_string LIMIT :offset,:limit";
-        $result = DB::select($query, $bindings);
-        $rows = new Paginator($result, 10);
+        $rows = $translation_query->paginate($perPage);
         $ar = $rows->toArray();
-        $permission = Permission::authorize($this);
-        $ar['page'] = [
-            "title" => __("Traductions"),
-            "href" => '/'.request()->path(),
-            "icon" => "fa fa-globe-africa",
-            "permission" => $permission,
-            "children" => []
-        ];
-        return view("$this->theme::traductions", $ar);
+        $ar['languages'] = DB::table("ry_admin_language_translations")->selectRaw("DISTINCT(lang)")->orderByRaw("FIELD(lang, 'fr') DESC")->pluck("lang");
+        $permission = Permission::authorize(__METHOD__);
+        return view("$this->theme::traductions", [
+            "data" => $ar,
+            "page" => [
+                "title" => ucfirst(__("traductions")),
+                "href" => '/'.request()->path(),
+                "icon" => "fa fa-globe-africa",
+                "permission" => $permission,
+                "children" => []
+            ]
+        ]);
     }
     
     public function post_traductions(Request $request) {
@@ -75,10 +53,12 @@ trait LanguageTranslationController
                 "translation_string" => $request->get("translation_string")
             ]);
         }
+        LanguageTranslation::export();
     }
     
     public function delete_traductions(Request $request) {
-        Permission::authorize('ryadmin.language_translation.*');
+        Permission::authorize(__METHOD__);
+        Translation::find($request->get("translation_id"))->delete();
         LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))->delete();
     }
     
@@ -92,7 +72,6 @@ trait LanguageTranslationController
             ];
         }
         return view("$this->theme::dialogs.languages", [
-            "languages" => Language::whereNotNull("code")->where('code', '<>', App::getLocale())->get(),
             "presets" => [
                 "locale" => App::getLocale(),
                 "presets" => $presets
@@ -102,29 +81,40 @@ trait LanguageTranslationController
     
     public function post_traductions_insert(Request $request) {
         $ar = $request->all();
-        $lt = 0;
         $presets = [App::getLocale()];
         $me = Auth::user();
+        $k = App::getLocale();
+        if(!isset($ar['lang'][App::getLocale()])) {
+            $lg0 = '';
+            foreach($ar['lang'] as $k => $v) {
+                $lg0 = $v;
+                if($v!='')
+                    break;
+            }
+            $ar['lang'][App::getLocale()] = $lg0;
+        }
+        if($ar['lang'][App::getLocale()]=='')
+            abort(404, __("aucune_traduction_na_ete_soumise"));
+        if(LanguageTranslation::where("translation_string", "LIKE", $ar['lang'][App::getLocale()])->exists())
+            return abort(409, __("cette_traduction_existe_deja"));
+        
+        $translation = Translation::create([
+            'code' => str_slug($ar['lang'][App::getLocale()], '_', $k)
+        ]);
+        $meanings = [];
         foreach($ar['lang'] as $k => $v) {
             if($v!='') {
-                if(!$lt) {
-                    if(LanguageTranslation::where("translation_string", "LIKE", $ar['lang'][App::getLocale()])->exists())
-                        return abort(409, __("Cette traduction existe déjà !"));
-                    
-                    $lt = DB::table("ry_admin_language_translations")->selectRaw("MAX(translation_id) AS lastid")->first();
-                }
-                $t = new LanguageTranslation();
-                $t->translation_id = $lt->lastid + 1;
-                $t->lang = $k;
-                $t->translation_string = $v;
-                $t->save();
-                
+                $meanings[] = [
+                    'lang' => $k,
+                    'translation_string' => $v
+                ];
                 if($k!=App::getLocale()) {
                     $presets[] = $k;
                 }
             }
         }
-        LanguageTranslation::writeToFiles();
+        $translation->meanings()->createMany($meanings);
+        LanguageTranslation::export();
         if(isset($ar['preset']) && $ar['preset']!='') {
             $preference = $me->preference()->firstOrCreate(['data' => json_encode(['languages_group' => $presets])]);
             $preference->ardata = ['languages_group' => [
@@ -132,6 +122,10 @@ trait LanguageTranslationController
             ]];
             $preference->save();
         }
+        return [
+            'type' => 'translation',
+            'row' => $translation
+        ];
     }
 }
 ?>

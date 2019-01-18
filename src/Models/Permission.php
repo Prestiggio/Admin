@@ -37,11 +37,14 @@ class Permission extends Model
         return $altPermissions;
     }
     
-    public static function authorize($controller) {
-        $ability = str_replace(['httpcontrollers', '.at.'], '.', str_slug(Route::current()->action['controller'], '.'));
+    public static function authorize($method) {
+        $ar = explode("::", $method);
+        $ability = str_replace('\\', '.', $ar[0]).'.'.$ar[1];
         $permissions = Cache::get('ryadmin.permissions');
-        if(in_array($ability, $permissions, true))
-            $controller->authorize($ability);
+        if(in_array($method, $permissions, true)) {
+            $controller = app($ar[0]);
+            $controller->authorize($method);
+        }
         return $ability;
     }
 }

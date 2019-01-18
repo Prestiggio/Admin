@@ -18,13 +18,13 @@ class AuthComposer
         $view->with('user', $this->me);
         $view->with('admin', [
             [
-                'title' => __('Autorisations et raccourcis'),
+                'title' => __('autorisations_et_raccourcis'),
                 'icon' => 'fa fa-shield-alt',
                 'href' => '#dialog/menus',
                 'data' => 'page'
             ],
             [
-                'title' => __('Traductions'),
+                'title' => ucfirst(__('traductions')),
                 'icon' => 'fa fa-language',
                 'href' => '/traductions'
             ]

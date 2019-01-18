@@ -3,16 +3,16 @@ namespace Ry\Admin\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Ry\Admin\Models\LanguageTranslation;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Ry\Admin\Http\Traits\LanguageTranslationController;
-use Ry\Admin\Models\Role;
 use Ry\Admin\Models\Layout\Layout;
 use Ry\Admin\Models\Layout\LayoutSection;
 use Ry\Admin\Models\Layout\RoleLayout;
 use App\User;
 use Ry\Admin\Models\Permission;
+use Illuminate\Support\Facades\Storage;
+use Ry\Admin\Models\LanguageTranslation;
+use App;
 
 class AdminController extends Controller
 {
@@ -27,7 +27,12 @@ class AdminController extends Controller
     public function index($action=null, Request $request) {
         if(!$action)
             return $this->get_dashboard($request);
-        $action = str_replace('-', '_', $action);
+        $translation = LanguageTranslation::whereHas('slug')
+            ->where("translation_string", "LIKE", $action)
+            ->where("lang", "=", App::getLocale())
+            ->first();
+        if($translation)
+            $action = $translation->slug->code;
         $action = strtolower($request->getMethod()) . '_' . $action;
         if($action!='' && method_exists($this, $action))
             return $this->$action($request);
@@ -82,12 +87,15 @@ class AdminController extends Controller
     }
     
     public function get_users(Request $request) {
-        $permission = Permission::authorize($this);
-        $query = User::with(["medias", "contacts", "roles"]);
+        $permission = Permission::authorize(__METHOD__);
+        $query = User::with(["medias", "contacts"]);
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){
                 $q->whereIn("ry_admin_roles.id", $request->get("roles"));
             });
+        }
+        elseif($request->has('guard')) {
+            $query->whereIn("guard", $request->get("guard"));
         }
         else {
             $query->where("guard", "=", "manager");
@@ -97,7 +105,7 @@ class AdminController extends Controller
             'guard' => ['manager'],
             'roles' => [2]
         ], $request->all());
-        return view("ryadmin::bs.users", [
+        return view("$this->theme::bs.users", [
             "users" => array_merge($users->toArray(), $ar),
             "page" => [
                 "title" => "Liste des utilisateurs",
@@ -126,14 +134,13 @@ class AdminController extends Controller
             "languages" => "fr"
         ]);
         
-        $filename = time() . $request->file('photo')->getClientOriginalName();
-        $request->file('photo')->move(public_path('uploads'), $filename);
+        $path = $request->file('photo')->store("avatars");
         
         if(isset($user["photo"])) {
             $_user->medias()->create([
                 'owner_id' => $_user->id,
-                'title' => $filename,
-                'path' => $filename,
+                'title' => $path,
+                'path' => $path,
                 'type' => 'image'
             ]);
         }
@@ -147,7 +154,14 @@ class AdminController extends Controller
     }
     
     public function get_edit_user($user_id) {
-        return view("ryadmin::bs.edit_user", ['row' => User::with(["medias", "contacts", "roles"])->find($user_id)]);
+        return view("$this->theme::bs.edit_user", ['row' => User::with(["medias", "contacts", "roles"])->find($user_id)]);
+    }
+    
+    public function post_activate_user(Request $request) {
+        $ar = $request->all();
+        $_user = User::find($request->get('id'));
+        $_user->active = $ar['active']=='true';
+        $_user->save();
     }
     
     public function post_update_user(Request $request) {
@@ -161,17 +175,16 @@ class AdminController extends Controller
         
         if($request->hasFile('photo')) {
             foreach($_user->medias as $media) {
-                unlink(public_path('uploads').'/'.$media->path);
+                Storage::delete($media->path);
             }
             $_user->medias()->delete();
             
-            $filename = time() . $request->file('photo')->getClientOriginalName();
-            $request->file('photo')->move(public_path('uploads'), $filename);
+            $path = $request->file('photo')->store("avatars");
             
             $_user->medias()->create([
                 'owner_id' => $_user->id,
-                'title' => $filename,
-                'path' => $filename,
+                'title' => $path,
+                'path' => $path,
                 'type' => 'image'
             ]);
         }
