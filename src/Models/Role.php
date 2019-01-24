@@ -27,7 +27,7 @@ class Role extends Model {
 	}
 	
 	public function layouts() {
-	    return $this->belongsToMany(Layout::class, "ry_admin_role_layouts", "layout_id", "role_id");
+	    return $this->belongsToMany(Layout::class, "ry_admin_role_layouts", "role_id", "layout_id");
 	}
 	
 	public function layoutOverrides() {

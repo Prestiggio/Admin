@@ -38,7 +38,6 @@
     @if(env('APP_DEBUG'))
     <script type="text/javascript" src="{{env('APP_URL')}}:3000/admin.amelior.js"></script>
     @else
-    <script type="text/javascript" src="/app.amelior.js"></script>
     <script type="text/javascript" src="/vendors~admin~manager.amelior.js"></script>
     <script type="text/javascript" src="/admin~manager.amelior.js"></script>
     <script type="text/javascript" src="/admin.amelior.js"></script>

@@ -13,6 +13,11 @@ use Ry\Admin\Models\Permission;
 use Illuminate\Support\Facades\Storage;
 use Ry\Admin\Models\LanguageTranslation;
 use App;
+use Ry\Admin\Models\UserRole;
+use Ry\Admin\Models\Role;
+use Faker\Factory;
+use Illuminate\Support\Facades\Mail;
+use Ry\Admin\Mail\AccountCreated;
 
 class AdminController extends Controller
 {
@@ -83,16 +88,31 @@ class AdminController extends Controller
     }
     
     public function get_add_user(Request $request) {
-        return view("ryadmin::bs.add_user", $request->all());
+        if($request->has("roles")) {
+            $roles = Role::with(["permissions"])->whereIn("id", $request->get("roles"));
+        }
+        else {
+            $roles = Role::with(["permissions"]);
+        }
+        return view("$this->theme::bs.add_user", [
+            "row" => array_merge([
+                "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+                "select_roles" => $roles->get()
+            ], $request->all())]);
     }
     
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
-        $query = User::with(["medias", "contacts"]);
+        $query = User::with(["medias", "contacts", "roles"]);
+        $add_role = __("ajouter_un_utilisateur");
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){
                 $q->whereIn("ry_admin_roles.id", $request->get("roles"));
             });
+            $_roles = Role::whereIn("id", $request->get("roles"));
+            if($_roles->count()==1) {
+                $add_role = __("ajouter") . ' ' . __($_roles->first()->name);
+            }
         }
         elseif($request->has('guard')) {
             $query->whereIn("guard", $request->get("guard"));
@@ -102,7 +122,7 @@ class AdminController extends Controller
         }
         $users = $query->paginate(10);
         $ar = array_merge([
-            'guard' => ['manager'],
+            'add_role' => $add_role,
             'roles' => [2]
         ], $request->all());
         return view("$this->theme::bs.users", [
@@ -119,10 +139,24 @@ class AdminController extends Controller
     public function post_insert_user(Request $request) {
         $user = $request->all();
         
+        $faker = Factory::create(App::getLocale());
+        $password = $faker->password(8);
+        
+        return Mail::to("admin@centrale.wr")->send(new AccountCreated());
+        
+        $roles = Role::whereIn("id", $request->get("roles"))->get();
+        $layout = "";
+        foreach ($roles as $role) {
+            $layout = $role->layouts()->first()->name;
+        }
+        
         $_user = new User();
-        $_user->guard = $user['guard'];
+        $_user->guard = $layout;
         $_user->name = $user['profile']["firstname"]." ".$user['profile']["lastname"];
         $_user->email = $user["email"];
+        
+        $temp_password = '';
+        
         $_user->password = Hash::make($user['password']);
         $_user->save();
         
@@ -153,7 +187,7 @@ class AdminController extends Controller
         ];
     }
     
-    public function get_edit_user($user_id) {
+    public function get_edit_user($user_id, Request $request) {
         return view("$this->theme::bs.edit_user", ['row' => User::with(["medias", "contacts", "roles"])->find($user_id)]);
     }
     

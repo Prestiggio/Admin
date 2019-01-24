@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Ry\Admin\Console\Commands\Admin;
 use Ry\Admin\Console\Commands\UserZero;
@@ -16,6 +17,7 @@ use Ry\Admin\Models\Permission;
 use App\User;
 use Illuminate\Support\Facades\Cache;
 use Ry\Admin\Console\Commands\RegisterLayoutSection;
+use Ry\Admin\Console\Commands\Ability;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -54,45 +56,47 @@ class RyServiceProvider extends ServiceProvider
     	//$kernel = $this->app['Illuminate\Contracts\Http\Kernel'];
     	//$kernel->pushMiddleware('Ry\Facebook\Http\Middleware\Facebook');
     	
-    	$permissions = Cache::get('ryadmin.permissions');
-    	
-    	if(!$permissions) {
-    	    $permissions = Permission::pluck("name");
-    	    Cache::put('ryadmin.permissions', $permissions->toArray(), 60*48);
-    	}
-    	else {
-    	    $permissions = collect($permissions);
-    	}
-    	
-    	$permissions->each(function($permission){
-    	    Gate::define($permission, function(User $user)use($permission){
-    	        $cacheKey = 'user.' . $user->id . '.permissions';
-    	        $userPermissions = Cache::get($cacheKey);
-    	        
-    	        if (! $userPermissions) {
-    	            $userClosure = function ($query) use ($user) {
-    	                $query->where('users.id', '=', $user->id);
-    	            };
+    	if(Schema::hasTable('ry_admin_permissions')) {
+    	    $permissions = Cache::get('ryadmin.permissions');
+    	    
+    	    if(!$permissions) {
+    	        $permissions = Permission::pluck("name");
+    	        Cache::put('ryadmin.permissions', $permissions->toArray(), 60*48);
+    	    }
+    	    else {
+    	        $permissions = collect($permissions);
+    	    }
+    	    
+    	    $permissions->each(function($permission){
+    	        Gate::define($permission, function(User $user)use($permission){
+    	            $cacheKey = 'user.' . $user->id . '.permissions';
+    	            $userPermissions = Cache::get($cacheKey);
     	            
-    	            $userPermissions = Permission::query()
-    	               ->whereHas('roles', function ($query) use($userClosure) {
-    	                   $query->where('active', '=', 1)->whereHas('users', $userClosure);
-    	            })->groupBy(['ry_admin_permissions.id', 'ry_admin_permissions.name'])->where('active', '=', 1)->pluck('name');
-    	            Cache::put($cacheKey, $userPermissions->toArray());
-    	        } else {
-    	            $userPermissions = collect($userPermissions);
-    	        }
-    	        
-    	        if ($userPermissions) {
-    	            $altPermissions = Permission::alts($permission);
-    	            return null !== $userPermissions->first(function (string $ident) use($altPermissions) {
-    	                return \in_array($ident, $altPermissions, true);
-    	            });
-    	        }
-    	        
-    	        return false;
+    	            if (! $userPermissions) {
+    	                $userClosure = function ($query) use ($user) {
+    	                    $query->where('users.id', '=', $user->id);
+    	                };
+    	                
+    	                $userPermissions = Permission::query()
+    	                ->whereHas('roles', function ($query) use($userClosure) {
+    	                    $query->where('active', '=', 1)->whereHas('users', $userClosure);
+    	                })->groupBy(['ry_admin_permissions.id', 'ry_admin_permissions.name'])->where('active', '=', 1)->pluck('name');
+    	                Cache::put($cacheKey, $userPermissions->toArray());
+    	            } else {
+    	                $userPermissions = collect($userPermissions);
+    	            }
+    	            
+    	            if ($userPermissions) {
+    	                $altPermissions = Permission::alts($permission);
+    	                return null !== $userPermissions->first(function (string $ident) use($altPermissions) {
+    	                    return \in_array($ident, $altPermissions, true);
+    	                });
+    	            }
+    	            
+    	            return false;
+    	        });
     	    });
-    	});
+    	}
     	
     	Blade::directive("d", function($expression){
     	    $ar = explode(":", $expression, 2);
@@ -169,6 +173,10 @@ HERE;
     	    return new RegisterLayoutSection();
     	});
     	$this->commands("ryadmin.section");
+    	$this->app->singleton("ryadmin.allow", function($app){
+    	    return new Ability();
+    	});
+    	$this->commands("ryadmin.allow");
     }
     public function map()
     {    	
