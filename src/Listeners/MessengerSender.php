@@ -5,7 +5,7 @@ namespace Ry\Admin\Listeners;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class MailSender implements ShouldQueue
+class MessengerSender implements ShouldQueue
 {
     use InteractsWithQueue;
 

@@ -12,12 +12,13 @@ use App\User;
 use Ry\Admin\Models\Permission;
 use Illuminate\Support\Facades\Storage;
 use Ry\Admin\Models\LanguageTranslation;
-use App;
+use App, Auth;
 use Ry\Admin\Models\UserRole;
 use Ry\Admin\Models\Role;
 use Faker\Factory;
 use Illuminate\Support\Facades\Mail;
 use Ry\Admin\Mail\AccountCreated;
+use Ry\Profile\Models\NotificationTemplate;
 
 class AdminController extends Controller
 {
@@ -25,8 +26,11 @@ class AdminController extends Controller
     
     protected $theme = "ryadmin";
     
+    protected $me;
+    
     public function __construct() {
         $this->middleware('adminauth:admin')->except(['login']);
+        $this->me = Auth::user();
     }
     
     public function index($action=null, Request $request) {
@@ -245,9 +249,34 @@ class AdminController extends Controller
                 ],
                 "content" => Storage::disk("local")->get("mail-template.html"),
                 "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
+                "channels" => NotificationTemplate::CHANNELS,
                 "presets" => []
             ]
         ]);
+    }
+    
+    public function post_templates_insert(Request $request) {
+        $this->me = Auth::user();
+        $ar = $request->all();
+        $template = new NotificationTemplate();
+        $template->name = $ar['template']['name'];
+        $template->archannels = $ar['template']['channels'];
+        $events = array_keys($ar['template']['events']);
+        $arevents = [];
+        foreach($events as $event) {
+            $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+        }
+        $template->arevents = $arevents;
+        $template->arinjections = $ar['template']['injections'];
+        $template->save();
+        $path = "notification_templates/" . $template->id . ".html";
+        Storage::disk('local')->put($path, $ar['content']);
+        $template->medias()->create([
+            "owner_id" => $this->me->id,
+            "title" => App::getLocale(),
+            "path" => $path,
+        ]);
+        return $template;
     }
     
     public function get_logout() {
