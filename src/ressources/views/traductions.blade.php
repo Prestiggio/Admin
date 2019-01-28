@@ -2,8 +2,8 @@
 
 @section("content")
 <ul class="breadcrumbs-alt">
-	<li><a href="/">@lang("Accueil")</a></li>
-	<li><a class="current">@lang("Traductions")</a></li>
+	<li><a href="/">@lang("accueil")</a></li>
+	<li><a class="current">@lang("traductions")</a></li>
 </ul>
 <div class="row">
 	<script type="application/json+ryTranslator">

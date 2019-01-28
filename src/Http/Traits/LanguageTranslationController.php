@@ -11,7 +11,7 @@ use Ry\Admin\Models\Translation;
 
 trait LanguageTranslationController
 {
-    public function get_traductions(Request $request) {
+    public function get_translations(Request $request) {
         $perPage = 10;
         if($request->has("s") && $request->get('s')!='') {
             $translation_query = Translation::whereHas('meanings', function($q)use($request){
@@ -37,7 +37,7 @@ trait LanguageTranslationController
         ]);
     }
     
-    public function post_traductions(Request $request) {
+    public function post_translations(Request $request) {
         $translation = LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))
         ->where("lang", "=", $request->get("lang"))->first();
         if(!$translation) {
@@ -56,20 +56,22 @@ trait LanguageTranslationController
         LanguageTranslation::export();
     }
     
-    public function delete_traductions(Request $request) {
+    public function delete_translations(Request $request) {
         Permission::authorize(__METHOD__);
         Translation::find($request->get("translation_id"))->delete();
         LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))->delete();
     }
     
-    public function get_traductions_add(Request $request) {
+    public function get_translations_add(Request $request) {
         $me = Auth::user();
         $presets = [];
-        foreach($me->preference->ardata["languages_group"] as $k => $v) {
-            $presets[] = [
-                "name" => $k,
-                "languages" => $v 
-            ];
+        if($me->preference) {
+            foreach($me->preference->ardata["languages_group"] as $k => $v) {
+                $presets[] = [
+                    "name" => $k,
+                    "languages" => $v
+                ];
+            }
         }
         return view("$this->theme::dialogs.languages", [
             "presets" => [
@@ -79,7 +81,7 @@ trait LanguageTranslationController
         ]);
     }
     
-    public function post_traductions_insert(Request $request) {
+    public function post_translations_insert(Request $request) {
         $ar = $request->all();
         $presets = [App::getLocale()];
         $me = Auth::user();

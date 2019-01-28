@@ -32,13 +32,16 @@ class AdminController extends Controller
     public function index($action=null, Request $request) {
         if(!$action)
             return $this->get_dashboard($request);
-        $translation = LanguageTranslation::whereHas('slug')
-            ->where("translation_string", "LIKE", $action)
+        $method = strtolower($request->getMethod());
+        $translation = LanguageTranslation::whereHas('slug', function($q)use($method){
+            $q->where("code", "LIKE", $method.'_%');
+        })->where("translation_string", "LIKE", $action)
             ->where("lang", "=", App::getLocale())
             ->first();
         if($translation)
             $action = $translation->slug->code;
-        $action = strtolower($request->getMethod()) . '_' . $action;
+        else
+            $action = $method . '_' . $action;
         if($action!='' && method_exists($this, $action))
             return $this->$action($request);
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
@@ -68,6 +71,9 @@ class AdminController extends Controller
                 }
             }
         }
+        return [
+            "type" => "setup"
+        ];
     }
     
     public function get_menus(Request $request) {
@@ -142,8 +148,6 @@ class AdminController extends Controller
         $faker = Factory::create(App::getLocale());
         $password = $faker->password(8);
         
-        return Mail::to("admin@centrale.wr")->send(new AccountCreated());
-        
         $roles = Role::whereIn("id", $request->get("roles"))->get();
         $layout = "";
         foreach ($roles as $role) {
@@ -155,9 +159,7 @@ class AdminController extends Controller
         $_user->name = $user['profile']["firstname"]." ".$user['profile']["lastname"];
         $_user->email = $user["email"];
         
-        $temp_password = '';
-        
-        $_user->password = Hash::make($user['password']);
+        $_user->password = Hash::make($password);
         $_user->save();
         
         $_user->profile()->create([
@@ -168,18 +170,20 @@ class AdminController extends Controller
             "languages" => "fr"
         ]);
         
-        $path = $request->file('photo')->store("avatars");
+        $path = $request->file('photo')->store("avatars", "public");
         
         if(isset($user["photo"])) {
             $_user->medias()->create([
                 'owner_id' => $_user->id,
                 'title' => $path,
-                'path' => $path,
+                'path' => 'storage/'.$path,
                 'type' => 'image'
             ]);
         }
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $user['contacts']);
+        
+        event("rynotify_insert_user", [$_user, $_user, $password]);
         
         return [
             "all" => $request->all(),
@@ -213,12 +217,12 @@ class AdminController extends Controller
             }
             $_user->medias()->delete();
             
-            $path = $request->file('photo')->store("avatars");
+            $path = $request->file('photo')->store("avatars", "public");
             
             $_user->medias()->create([
                 'owner_id' => $_user->id,
                 'title' => $path,
-                'path' => $path,
+                'path' => 'storage/'.$path,
                 'type' => 'image'
             ]);
         }
@@ -230,6 +234,20 @@ class AdminController extends Controller
     
     public function delete_users(Request $request) {
         User::find($request->get('id'))->delete();
+    }
+    
+    public function get_templates_add() {
+        return view("$this->theme::templates_add", [
+            "data" => [
+                "page" => [
+                    "title" => __("ajouter_une_template"),
+                    "icon" => "fa fa-file-invoice"
+                ],
+                "content" => Storage::disk("local")->get("mail-template.html"),
+                "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
+                "presets" => []
+            ]
+        ]);
     }
     
     public function get_logout() {

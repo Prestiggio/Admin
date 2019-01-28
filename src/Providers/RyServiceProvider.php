@@ -5,6 +5,7 @@ namespace Ry\Admin\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -18,6 +19,10 @@ use App\User;
 use Illuminate\Support\Facades\Cache;
 use Ry\Admin\Console\Commands\RegisterLayoutSection;
 use Ry\Admin\Console\Commands\Ability;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use Ry\Admin\Mail\EventCaught;
+use Ry\Profile\Models\NotificationTemplate;
 
 class RyServiceProvider extends ServiceProvider
 {

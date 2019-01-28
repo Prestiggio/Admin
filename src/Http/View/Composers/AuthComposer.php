@@ -26,7 +26,7 @@ class AuthComposer
             [
                 'title' => ucfirst(__('traductions')),
                 'icon' => 'fa fa-language',
-                'href' => '/traductions'
+                'href' => '/'.__('get_translations')
             ]
         ]);
         if($this->me) {
