@@ -112,6 +112,21 @@ class AdminController extends Controller
             ], $request->all())]);
     }
     
+    public function get_edit_user($user_id, Request $request) {
+        $row = User::with(["medias", "contacts", "roles"])->find($user_id)->toArray();
+        if($request->has("roles")) {
+            $roles = Role::with(["permissions"])->whereIn("id", $request->get("roles"));
+        }
+        else {
+            $roles = Role::with(["permissions"]);
+        }
+        return view("$this->theme::bs.edit_user", [
+            'row' => array_merge([
+                "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+                "select_roles" => $roles->get()
+            ], $row)]);
+    }
+    
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
         $query = User::with(["medias", "contacts", "roles"]);
@@ -194,10 +209,6 @@ class AdminController extends Controller
             "all" => $request->all(),
             "files" => $request->file('photo')
         ];
-    }
-    
-    public function get_edit_user($user_id, Request $request) {
-        return view("$this->theme::bs.edit_user", ['row' => User::with(["medias", "contacts", "roles"])->find($user_id)]);
     }
     
     public function post_activate_user(Request $request) {
