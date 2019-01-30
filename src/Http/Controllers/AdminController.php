@@ -190,24 +190,35 @@ class AdminController extends Controller
             "languages" => "fr"
         ]);
         
-        $path = $request->file('photo')->store("avatars", "public");
+        foreach ($roles as $role) {
+            $_user->roles()->attach($role->id);
+        }
         
-        if(isset($user["photo"])) {
-            $_user->medias()->create([
-                'owner_id' => $_user->id,
-                'title' => $path,
-                'path' => 'storage/'.$path,
-                'type' => 'image'
-            ]);
+        $_user->load("roles");
+        
+        if($request->hasFile('photo')) {
+            $path = $request->file('photo')->store("avatars", "public");
+            if(isset($user["photo"])) {
+                $_user->medias()->create([
+                    'owner_id' => $_user->id,
+                    'title' => $path,
+                    'path' => 'storage/'.$path,
+                    'type' => 'image'
+                ]);
+            }
         }
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $user['contacts']);
         
-        event("rynotify_insert_user", [$_user, $_user, $password]);
+        event("rynotify_insert_user", [$_user, [
+            'user' => $_user, 
+            'password' => $password]]);
+        
+        $_user->load("contacts");
         
         return [
-            "all" => $request->all(),
-            "files" => $request->file('photo')
+            "row" => $_user,
+            "type" => "users"
         ];
     }
     
