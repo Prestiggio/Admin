@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Ry\Admin\Mail\EventCaught;
 use Ry\Profile\Models\NotificationTemplate;
+use Ry\Admin\Console\Commands\RegisterEvent;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -182,6 +183,10 @@ HERE;
     	    return new Ability();
     	});
     	$this->commands("ryadmin.allow");
+    	$this->app->singleton(RegisterEvent::class, function($app){
+    	    return new RegisterEvent();
+    	});
+    	$this->commands(RegisterEvent::class);
     }
     public function map()
     {    	

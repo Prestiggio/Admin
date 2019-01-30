@@ -33,5 +33,9 @@ class Role extends Model {
 	public function layoutOverrides() {
 	    return $this->hasMany(RoleLayout::class);
 	}
+	
+	public function userRoles() {
+	    return $this->hasMany(UserRole::class, "role_id");
+	}
 
 }

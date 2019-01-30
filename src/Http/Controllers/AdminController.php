@@ -19,6 +19,7 @@ use Faker\Factory;
 use Illuminate\Support\Facades\Mail;
 use Ry\Admin\Mail\AccountCreated;
 use Ry\Profile\Models\NotificationTemplate;
+use Ry\Admin\Mail\Preview;
 
 class AdminController extends Controller
 {
@@ -233,7 +234,10 @@ class AdminController extends Controller
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
         
-        return User::with(["medias", "contacts", "roles"])->find($_user->id);
+        return [
+            "type" => "users",
+            "row" => User::with(["medias", "contacts", "roles"])->find($_user->id)
+        ];
     }
     
     public function delete_users(Request $request) {
@@ -241,7 +245,8 @@ class AdminController extends Controller
     }
     
     public function get_templates_add() {
-        return view("$this->theme::templates_add", [
+        return view("$this->theme::templates_form", [
+            'action' => '/templates_insert',
             "data" => [
                 "page" => [
                     "title" => __("ajouter_une_template"),
@@ -277,6 +282,58 @@ class AdminController extends Controller
             "path" => $path,
         ]);
         return $template;
+    }
+    
+    public function get_templates_edit(Request $request) {
+        $template = NotificationTemplate::find($request->get("id"));
+        $data = $template->toArray();
+        return view("$this->theme::templates_form", [
+            'action' => 'templates_update',
+            "data" => array_merge([
+                "page" => [
+                    "title" => __("editer_la_template").' : '.$template->name,
+                    "icon" => "fa fa-file-invoice"
+                ],
+                "content" => Storage::disk("local")->get($template->medias()->first()->path),
+                "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
+                "channels" => NotificationTemplate::CHANNELS,
+                "presets" => []
+            ], $data)
+        ]);
+    }
+    
+    public function post_templates_update(Request $request) {
+        $this->me = Auth::user();
+        $ar = $request->all();
+        $template = NotificationTemplate::find($request->get("id"));
+        $template->name = $ar['template']['name'];
+        $template->archannels = $ar['template']['channels'];
+        $events = array_keys($ar['template']['events']);
+        $arevents = [];
+        foreach($events as $event) {
+            $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+        }
+        $template->arevents = $arevents;
+        $template->arinjections = $ar['template']['injections'];
+        $template->save();
+        $path = "notification_templates/" . $template->id . ".html";
+        Storage::disk('local')->update($path, $ar['content']);
+        return [
+            "type" => "templates",
+            "row" => $template
+        ];
+    }
+    
+    public function delete_templates(Request $request) {
+        NotificationTemplate::find($request->get("id"))->delete();
+        return [];
+    }
+    
+    public function post_test_email(Request $request) {
+        $this->me = Auth::user();
+        Mail::to($this->me)->sendNow(new Preview($request->get('subject'), $request->get('content'), $request->get('signature'), [
+            "user" => $this->me
+        ]));
     }
     
     public function get_logout() {

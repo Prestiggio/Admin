@@ -11,21 +11,24 @@ use Ry\Centrale\SiteScope;
 use Ry\Profile\Models\NotificationTemplate;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Support\Facades\Storage;
+use Auth;
 
-class EventCaught extends Mailable
+class Preview extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
     
-    private $data, $template;
+    private $content, $signature, $data;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($template, $data)
+    public function __construct($subject="Email test", $content="Email test", $signature="Undefined", $data=[])
     {
-        $this->template = $template;
+        $this->subject = $subject;
+        $this->content = $content;
+        $this->signature = $signature;
         $this->data = $data;
     }
 
@@ -37,17 +40,15 @@ class EventCaught extends Mailable
     public function build()
     {
         //get the template file
-        $this->from("no-reply@".env('APP_DOMAIN'), $this->template->arinjections['signature']);
-        $this->subject($this->template->arinjections['subject']);
-        list($to, $payload) = $this->data;
+        $this->from("no-reply@".env('APP_DOMAIN'), $this->signature);
         $site = app(SiteScope::class)->getSite();
         if(!$site->nsetup['emailing']) {
             $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         $loader = new \Twig_Loader_Array([
-            "email" => Storage::disk('local')->get($this->template->medias()->first()->path)
+            "email" => $this->content
         ]);
         $twig = new \Twig_Environment($loader);
-        return $this->html($twig->render("email", $payload));
+        return $this->html($twig->render("email", $this->data));
     }
 }
