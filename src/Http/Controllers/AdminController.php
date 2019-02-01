@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Mail;
 use Ry\Admin\Mail\AccountCreated;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Mail\Preview;
+use Ry\Profile\Models\Contact;
 
 class AdminController extends Controller
 {
@@ -268,6 +269,8 @@ class AdminController extends Controller
     
     public function delete_users(Request $request) {
         User::find($request->get('id'))->delete();
+        
+        Contact::whereJoinableType(User::class)->whereJoinableId($request->get("id"))->delete();
     }
     
     public function get_templates_add() {
