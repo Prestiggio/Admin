@@ -202,7 +202,8 @@ class AdminController extends Controller
         $_user->load("roles");
         
         if($request->hasFile('photo')) {
-            $path = $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
+            $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
+            $path = $request->file('photo')->hashName();
             if(isset($user["photo"])) {
                 $_user->medias()->create([
                     'owner_id' => $_user->id,
@@ -249,8 +250,8 @@ class AdminController extends Controller
             }
             $_user->medias()->delete();
             
-            $path = $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
-            
+            $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
+            $path = $request->file('photo')->hashName();
             $_user->medias()->create([
                 'owner_id' => $_user->id,
                 'title' => $path,
