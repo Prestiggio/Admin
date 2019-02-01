@@ -147,6 +147,10 @@ class AdminController extends Controller
             $query->where("guard", "=", "manager");
         }
         $users = $query->paginate(10);
+        $users->map(function($item){
+            $item->setAttribute("details", app("centrale")->user_detail($item));
+            return $item;
+        });
         $ar = array_merge([
             'add_role' => $add_role,
             'roles' => [2]
@@ -197,7 +201,7 @@ class AdminController extends Controller
         $_user->load("roles");
         
         if($request->hasFile('photo')) {
-            $path = $request->file('photo')->store("avatars", "public");
+            $path = $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
             if(isset($user["photo"])) {
                 $_user->medias()->create([
                     'owner_id' => $_user->id,
@@ -244,7 +248,7 @@ class AdminController extends Controller
             }
             $_user->medias()->delete();
             
-            $path = $request->file('photo')->store("avatars", "public");
+            $path = $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
             
             $_user->medias()->create([
                 'owner_id' => $_user->id,
