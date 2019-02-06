@@ -157,7 +157,7 @@ class AdminController extends Controller
             'roles' => [2]
         ], $request->all());
         return view("$this->theme::bs.users", [
-            "users" => array_merge($users->toArray(), $ar),
+            "data" => array_merge($users->toArray(), $ar),
             "page" => [
                 "title" => "Liste des utilisateurs",
                 "href" => "/users",

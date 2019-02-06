@@ -8,7 +8,7 @@ use Ry\Admin\Models\Layout\LayoutSection;
 
 class AuthComposer
 {
-    protected $me;
+    protected $me, $keys = [];
     
     public function __construct() {
         $this->me = Auth::user();
@@ -16,154 +16,56 @@ class AuthComposer
     
     public function compose(View $view) {
         $view->with('user', $this->me);
-        $view->with('admin', [
-            [
-                'title' => __('autorisations_et_raccourcis'),
-                'icon' => 'fa fa-shield-alt',
-                'href' => '#dialog/menus',
-                'data' => 'page'
-            ],
-            [
-                'title' => ucfirst(__('traductions')),
-                'icon' => 'fa fa-language',
-                'href' => '/'.__('get_translations')
-            ]
-        ]);
+        $data = $view->getData();
+        if(isset($data['page'])) {
+            
+        }
+        $sitemap = [];
         if($this->me) {
             $guard = $this->me->guard;
+            if($guard=='admin') {
+                $view->with('admin', [
+                    [
+                        'title' => __('autorisations_et_raccourcis'),
+                        'icon' => 'fa fa-shield-alt',
+                        'href' => '#dialog/menus',
+                        'data' => 'page'
+                    ],
+                    [
+                        'title' => ucfirst(__('traductions')),
+                        'icon' => 'fa fa-language',
+                        'href' => '/'.__('get_translations')
+                    ]
+                ]);
+            }
             $sections = LayoutSection::whereHas("layout", function($q)use($guard){
                 $q->where("name", "=", $guard);
             })->get();
             foreach($sections as $section) {
+                $sitemap = array_merge($sitemap, $section->setup);
                 $view->with($section->name, $section->setup);
             }
         }
-        $view->with('menuka', [
-            [
-                "title" => "Tableau de bord",
-                "href" => "/",
-                "icon" => "fa fa-tachometer-alt"
-            ],
-            [
-                "title" => "Gestion générale",
-                "icon" => "fa fa-cogs",
-                "children" => [
-                    [
-                        "title" => "Utilisateurs",
-                        "children" => [
-                            [
-                                "title" => "Votre profil",
-                                "href" => "/utilisateurs/mon-compte"
-                            ],
-                            [
-                                "title" => "Ajouter utilisateur",
-                                "href" => "/utilisateurs/ajout"
-                            ]
-                        ]
-                    ],
-                    [
-                        "title" => "Banana",
-                        "children" => [
-                            [
-                                "title" => "Votre profil",
-                                "href" => "/utilisateurs/mon-compte"
-                            ],
-                            [
-                                "title" => "Ajouter utilisateur",
-                                "icon" => "fa fa-cogs",
-                                "children" => [
-                                    [
-                                        "title" => "Votre profil",
-                                        "href" => "/utilisateurs/mon-compte"
-                                    ],
-                                    [
-                                        "title" => "Ajouter utilisateur",
-                                        "children" => [
-                                            [
-                                                "title" => "Votre profil",
-                                                "href" => "/utilisateurs/mon-compte"
-                                            ],
-                                            [
-                                                "title" => "Ajouter utilisateur",
-                                                "href" => "/utilisateurs/ajout"
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ],
-                    [
-                        "title" => "Utilisateurs",
-                        "children" => [
-                            [
-                                "title" => "Votre profil",
-                                "href" => "/utilisateurs/mon-compte"
-                            ],
-                            [
-                                "title" => "Ajouter utilisateur",
-                                "href" => "/utilisateurs/ajout"
-                            ]
-                        ]
-                    ],
-                    [
-                        "title" => "Utilisateurs",
-                        "children" => [
-                            [
-                                "title" => "Votre profil",
-                                "href" => "/utilisateurs/mon-compte"
-                            ],
-                            [
-                                "title" => "Ajouter utilisateur",
-                                "href" => "/utilisateurs/ajout"
-                            ]
-                        ]
-                    ]
+        
+        $this->test($sitemap);
+        $view->with("tyar", $sitemap);
+        $view->with("breadcrumbs", [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => __('accueil'),
+                    'item' => '/'
                 ]
             ],
-            [
-                "title" => "Utilisateurs",
-                "icon" => "fa fa-users",
-                "children" => [
-                    [
-                        "title" => "Votre profil",
-                        "href" => "/utilisateurs/mon-compte"
-                    ],
-                    [
-                        "title" => "Ajouter utilisateur",
-                        "href" => "/utilisateurs/ajout"
-                    ]
-                ]
-            ],
-            [
-                "title" => "Utilisateurs",
-                "icon" => "fa fa-users",
-                "children" => [
-                    [
-                        "title" => "Votre profil",
-                        "href" => "/utilisateurs/mon-compte"
-                    ],
-                    [
-                        "title" => "Ajouter utilisateur",
-                        "href" => "/utilisateurs/ajout"
-                    ]
-                ]
-            ],
-            [
-                "title" => "Utilisateurs",
-                "icon" => "fa fa-users",
-                "children" => [
-                    [
-                        "title" => "Votre profil",
-                        "href" => "/utilisateurs/mon-compte"
-                    ],
-                    [
-                        "title" => "Ajouter utilisateur",
-                        "href" => "/utilisateurs/ajout"
-                    ]
-                ]
-            ],
+            'current' => ['page']
         ]);
+    }
+    
+    private function test(&$ar) {
+        
     }
 }
 ?>

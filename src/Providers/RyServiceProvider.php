@@ -24,6 +24,8 @@ use Carbon\Carbon;
 use Ry\Admin\Mail\EventCaught;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Console\Commands\RegisterEvent;
+use Ry\Admin\RyAdmin;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -132,22 +134,25 @@ HERE;
     	
 	    Event::listen("composing:*", function($name, $views){
 	        if(isset($_GET["json"])) {
-	            $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+	            foreach($views as $view) {
+	                app("ryadmin")->setData($view->getData());
+	                app("ryadmin")->terminate();
+	                return;
+	            }
+	        }
+	        if(isset($_GET["debug"])) {
 	            $ar = [];
 	            foreach($views as $view) {
-	                $ar = $view->getData();
-	                break;
+	                $ar[] = $view->getData();
 	            }
-	            $response = response()->json($ar);
-	            $response->send();
-	            $kernel->terminate(Request::capture(), $response);
-	            exit;
+	            app("ryadmin")->push($ar);
 	        }
 	    });
 	    
         Event::listen("*", function(){
             $args = func_get_args();
             $d = $args;
+            //Storage::disk('local')->append("events.log", $d[0]."\n");
         });
         
         View::composer(
@@ -155,6 +160,12 @@ HERE;
             'rymanager::*', AuthComposer::class,
             'manager::*', AuthComposer::class
         );
+        
+        Event::listen(RequestHandled::class, function(){
+            if(isset($_GET["debug"])) {
+                app("ryadmin")->terminate();
+            }
+        });
     }
 
     /**
@@ -164,6 +175,9 @@ HERE;
      */
     public function register()
     {
+        $this->app->singleton("ryadmin", function(){
+            return new RyAdmin();
+        });
     	$this->app->singleton("admin", function(){
     		return new Administration();
     	});
