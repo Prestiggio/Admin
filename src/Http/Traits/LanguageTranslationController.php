@@ -81,6 +81,20 @@ trait LanguageTranslationController
         ]);
     }
     
+    public function translatable($word) {
+        $translation = Translation::where('code', 'LIKE', $word)->first();
+        if(!$translation) {
+            $translation = Translation::create([
+                'code' => $word
+            ]);
+            $translation->meanings()->create([
+                'lang' => App::getLocale(),
+                'translation_string' => $word
+            ]);
+        }
+        return $translation;
+    }
+    
     public function post_translations_insert(Request $request) {
         $ar = $request->all();
         $presets = [App::getLocale()];
