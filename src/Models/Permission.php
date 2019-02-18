@@ -40,7 +40,7 @@ class Permission extends Model
     public static function authorize($method) {
         $ar = explode("::", $method);
         $ability = str_replace('\\', '.', $ar[0]).'.'.$ar[1];
-        $permissions = Cache::get('ryadmin.permissions');
+        $permissions = app("ryadmin")->getCache();
         if(in_array($method, $permissions, true)) {
             $controller = app($ar[0]);
             $controller->authorize($method);

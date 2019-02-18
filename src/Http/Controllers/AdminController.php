@@ -130,7 +130,7 @@ class AdminController extends Controller
     
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
-        $query = User::with(["medias", "contacts", "roles"]);
+        $query = User::with(["profile", "medias", "contacts", "roles"]);
         $add_role = __("ajouter_un_utilisateur");
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){

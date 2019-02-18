@@ -118,7 +118,7 @@ class RyServiceProvider extends ServiceProvider
     	    }
     	    return <<<HERE
     	        <?php 
-                if(env('APP_DEBUG')) {
+                if(env('APP_DEBUG') && isset(\$_GET["debug"])) {
                     \$d_sections = \Illuminate\Support\Facades\Cache::get("ryadmin.sections");
             	       if(!\$d_sections)
             	           \$d_sections = [];
