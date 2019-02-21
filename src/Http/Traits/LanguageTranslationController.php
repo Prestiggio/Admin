@@ -81,11 +81,11 @@ trait LanguageTranslationController
         ]);
     }
     
-    public function translatable($word) {
-        $translation = Translation::where('code', 'LIKE', $word)->first();
+    public function translatable($word, $slug=false) {
+        $translation = Translation::where('code', 'LIKE', $slug?str_slug($word, '_'):$word)->first();
         if(!$translation) {
             $translation = Translation::create([
-                'code' => $word
+                'code' => $slug ? str_slug($word, '_') : $word
             ]);
             $translation->meanings()->create([
                 'lang' => App::getLocale(),

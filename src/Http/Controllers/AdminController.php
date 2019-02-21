@@ -221,6 +221,7 @@ class AdminController extends Controller
             'password' => $password]]);
         
         $_user->load("contacts");
+        $_user->load("medias");
         
         return [
             "row" => $_user,
