@@ -87,8 +87,9 @@ trait LanguageTranslationController
             $translation = Translation::create([
                 'code' => $slug ? str_slug($word, '_') : $word
             ]);
-            $translation->meanings()->create([
-                'lang' => App::getLocale(),
+            $translation->meanings()->updateOrCreate([
+                'lang' => App::getLocale()
+            ], [
                 'translation_string' => $word
             ]);
         }
@@ -142,6 +143,48 @@ trait LanguageTranslationController
             'type' => 'translation',
             'row' => $translation
         ];
+    }
+    
+    public function putTranslationById($translation_id, $translation_string, $lang=null) {
+        if(!$lang)
+            $lang = App::getLocale();
+        $translation = Translation::find($translation_id);
+        $translation->meanings()->updateOrCreate([
+            'lang' => $lang
+        ], [
+            'translation_string' => $translation_string
+        ]);
+        return $translation;
+    }
+    
+    public function putTranslation($slug, $translation_string, $lang=null) {
+        if(!$lang)
+            $lang = App::getLocale();
+        $translation = Translation::firstOrCreate([
+            'code' => $slug
+        ]);
+        $translation->meanings()->updateOrCreate([
+            'lang' => $lang
+        ], [
+            'translation_string' => $translation_string
+        ]);
+        return $translation;
+    }
+    
+    public function postTranslation($translation_string, $lang=null) {
+        if(!$lang)
+            $lang = App::getLocale();
+        $exists = LanguageTranslation::where("translation_string", "LIKE", $translation_string)->whereLang($lang)->first();
+        if($exists)
+            return $exists->slug;
+        $slug = str_slug($translation_string, '_', $lang);
+        $translation = Translation::firstOrCreate(['code' => $slug]);
+        $translation->meanings()->updateOrCreate([
+            'lang' => $lang
+        ], [
+            'translation_string' => $translation_string
+        ]);
+        return $translation;
     }
 }
 ?>

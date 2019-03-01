@@ -22,7 +22,8 @@ class RyAdmin
     public function fullUser() {
         $user = Auth::user();
         if(!$this->me && $user) {
-            $this->me = User::with("profile")->find($user->id)->append('thumb');
+            $this->me = $user;
+            $this->me->append("thumb");
         }
         return $this->me;
     }

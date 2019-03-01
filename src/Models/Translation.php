@@ -12,11 +12,17 @@ class Translation extends Model
     
     protected $appends = ['strings'];
     
+    protected $with = ["meanings"];
+    
+    private static $cache = [];
+    
     public function meanings() {
         return $this->hasMany(LanguageTranslation::class, "translation_id");
     }
     
     public function getStringsAttribute() {
-        return $this->meanings()->pluck('translation_string', 'lang');
+        if(!isset(self::$cache[$this->id]))
+            self::$cache[$this->id] = $this->meanings()->pluck('translation_string', 'lang');
+        return self::$cache[$this->id];
     }
 }

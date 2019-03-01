@@ -5,6 +5,7 @@ namespace Ry\Admin\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
+use App;
 
 class LanguageTranslation extends Model
 {
@@ -14,6 +15,8 @@ class LanguageTranslation extends Model
     
     protected $fillable = ['translation_string', 'lang'];
     
+    protected $appends = ["name"];
+    
     protected static function boot() {
         parent::boot();
         
@@ -22,8 +25,16 @@ class LanguageTranslation extends Model
         });
     }
     
+    public function scopeCurrent($query) {
+        return $query->whereLang(App::getLocale());
+    }
+    
     public function slug() {
         return $this->belongsTo(Translation::class, "translation_id");
+    }
+    
+    public function getNameAttribute() {
+        return $this->translation_string;
     }
     
     public static function export() {
