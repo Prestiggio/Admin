@@ -24,6 +24,7 @@ class RyAdmin
         if(!$this->me && $user) {
             $this->me = $user;
             $this->me->append("thumb");
+            $this->me->append("logout");
         }
         return $this->me;
     }

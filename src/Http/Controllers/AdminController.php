@@ -36,6 +36,7 @@ class AdminController extends Controller
     }
     
     public function index($action=null, Request $request) {
+        Auth::user()->log($action);
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
