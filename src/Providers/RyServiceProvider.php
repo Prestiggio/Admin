@@ -155,11 +155,9 @@ HERE;
             //Storage::disk('local')->append("events.log", $d[0]."\n");
         });
         
-        View::composer(
-            'ryadmin::*', AuthComposer::class,
-            'rymanager::*', AuthComposer::class,
-            'manager::*', AuthComposer::class
-        );
+        View::composer('ryadmin::*', AuthComposer::class);
+        View::composer('rymanager::*', AuthComposer::class);
+        View::composer('manager::*', AuthComposer::class);
         
         Event::listen(RequestHandled::class, function(){
             if(isset($_GET["debug"])) {

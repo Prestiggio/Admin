@@ -22,6 +22,9 @@ trait LanguageTranslationController
             $translation_query = Translation::orderBy('code');
         }
         $rows = $translation_query->paginate($perPage);
+        $rows->map(function($item){
+            $item->append("strings");
+        });
         $ar = $rows->toArray();
         $ar['languages'] = DB::table("ry_admin_language_translations")->selectRaw("DISTINCT(lang)")->orderByRaw("FIELD(lang, 'fr') DESC")->pluck("lang");
         $permission = Permission::authorize(__METHOD__);
