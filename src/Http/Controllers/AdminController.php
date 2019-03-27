@@ -171,6 +171,9 @@ class AdminController extends Controller
     public function post_insert_user(Request $request) {
         $user = $request->all();
         
+        if(User::whereEmail($user['email'])->exists())
+            abort(410, __("L'adresse email est déjà utilisé"));
+        
         $faker = Factory::create(App::getLocale());
         $password = $faker->password(8);
         

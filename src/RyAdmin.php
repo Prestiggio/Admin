@@ -50,6 +50,10 @@ class RyAdmin
         $this->data[] = $ar;
     }
     
+    public function getData() {
+        return $this->data;
+    }
+    
     public function terminate() {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
         $response = response()->json($this->data);
