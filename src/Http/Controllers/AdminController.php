@@ -246,7 +246,13 @@ class AdminController extends Controller
         
         $_user->profile()->update($ar['profile']);
         
-        if($request->hasFile('photo')) {
+        if($request->has("nophoto")) {
+            foreach($_user->medias as $media) {
+                Storage::delete($media->path);
+            }
+            $_user->medias()->delete();
+        }
+        elseif($request->hasFile('photo')) {
             foreach($_user->medias as $media) {
                 Storage::delete($media->path);
             }
