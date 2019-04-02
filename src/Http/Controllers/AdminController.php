@@ -349,10 +349,12 @@ class AdminController extends Controller
         $template = NotificationTemplate::find($request->get("id"));
         $template->name = $ar['template']['name'];
         $template->archannels = $ar['template']['channels'];
-        $events = array_keys($ar['template']['events']);
         $arevents = [];
-        foreach($events as $event) {
-            $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+        if(isset($ar['template']['events'])) {
+            $events = array_keys($ar['template']['events']);
+            foreach($events as $event) {
+                $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+            }
         }
         $template->arevents = $arevents;
         $template->arinjections = $ar['template']['injections'];
