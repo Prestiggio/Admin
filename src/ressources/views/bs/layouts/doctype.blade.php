@@ -24,9 +24,8 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 	@if(!env('APP_DEBUG'))
-    <link href="/1.css" rel="stylesheet">
-    <link href="/0.css" rel="stylesheet">
-    <link href="/admin.css" rel="stylesheet">
+   	<link href="/style1.css" rel="stylesheet">
+    <link href="/style0.css" rel="stylesheet">
     @endif
 </head>
 @section("body")

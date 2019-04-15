@@ -23,9 +23,8 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
     @if(!env('APP_DEBUG'))
-    <link href="/1.css" rel="stylesheet">
-    <link href="/0.css" rel="stylesheet">
-    <link href="/admin.css" rel="stylesheet">
+    <link href="/style1.css" rel="stylesheet">
+    <link href="/style0.css" rel="stylesheet">
     @endif
 </head>
 <body class="full-screen">
