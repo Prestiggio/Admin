@@ -124,6 +124,7 @@ class AdminController extends Controller
         }
         return view("$this->theme::bs.edit_user", [
             'row' => array_merge([
+                "view" => "form",
                 "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
                 "select_roles" => $roles->get()
             ], $row)]);
@@ -154,6 +155,7 @@ class AdminController extends Controller
             return $item;
         });
         $ar = array_merge([
+            'view' => 'list',
             'add_role' => $add_role,
             'roles' => [2]
         ], $request->all());

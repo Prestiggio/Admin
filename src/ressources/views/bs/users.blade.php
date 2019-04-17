@@ -7,7 +7,7 @@
 	<li><a class="current">{{$page['title']}}</a></li>
 </ul>
 <div class="row">
-	<script type="application/json+ryUsers">
+	<script type="application/json+ryAdmin.User">
         {!!json_encode($users)!!}
     </script>
 </div>
