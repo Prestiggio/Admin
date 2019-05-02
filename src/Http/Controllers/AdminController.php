@@ -288,14 +288,21 @@ class AdminController extends Controller
     }
     
     public function get_templates_add() {
-        return view("$this->theme::templates_form", [
-            'action' => '/templates_insert',
+        return view("$this->theme::bs.dialog", [
+            'view' => 'Editor',
             "data" => [
+                'action' => '/templates_insert',
                 "page" => [
                     "title" => __("ajouter_une_template"),
                     "icon" => "fa fa-file-invoice"
                 ],
-                "content" => Storage::disk("local")->get("mail-template.html"),
+                "contents" => [
+                    [
+                        "lang" => App::getLocale(),
+                        "bindings" => [],
+                        "content" => Storage::disk("local")->get("mail-template.html")
+                    ]
+                ],
                 "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
                 "channels" => NotificationTemplate::CHANNELS,
                 "presets" => []
@@ -317,27 +324,39 @@ class AdminController extends Controller
         $template->arevents = $arevents;
         $template->arinjections = $ar['template']['injections'];
         $template->save();
-        $path = "notification_templates/" . $template->id . ".html";
-        Storage::disk('local')->put($path, $ar['content']);
-        $template->medias()->create([
-            "owner_id" => $this->me->id,
-            "title" => App::getLocale(),
-            "path" => $path,
-        ]);
+        foreach($ar['contents'] as $lang => $content) {
+            $path = "notification_templates/" . $template->id . "-".$lang.".html";
+            Storage::disk('local')->put($path, $content);
+            $template->medias()->create([
+                "owner_id" => $this->me->id,
+                "title" => $lang,
+                "description" => isset($ar['bindings'][$lang]) ? json_encode($ar['bindings'][$lang]) : '',
+                "path" => $path,
+            ]);
+        }
         return $template;
     }
     
     public function get_templates_edit(Request $request) {
         $template = NotificationTemplate::find($request->get("id"));
+        $contents = [];
+        foreach($template->medias as $file) {
+            $contents[] = [
+                'lang' => $file->title,
+                'bindings' => $file->description!='' ? json_decode($file->description) : [],
+                'content' => Storage::disk("local")->get($file->path)
+            ];
+        }
         $data = $template->toArray();
-        return view("$this->theme::templates_form", [
-            'action' => 'templates_update',
+        return view("$this->theme::bs.dialog", [
+            "view" => "Editor",
             "data" => array_merge([
+                'action' => '/templates_update',
                 "page" => [
                     "title" => __("editer_la_template").' : '.$template->name,
                     "icon" => "fa fa-file-invoice"
                 ],
-                "content" => Storage::disk("local")->get($template->medias()->first()->path),
+                "contents" => $contents,
                 "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
                 "channels" => NotificationTemplate::CHANNELS,
                 "presets" => []
@@ -361,8 +380,10 @@ class AdminController extends Controller
         $template->arevents = $arevents;
         $template->arinjections = $ar['template']['injections'];
         $template->save();
-        $path = "notification_templates/" . $template->id . ".html";
-        Storage::disk('local')->update($path, $ar['content']);
+        foreach($ar['contents'] as $lang => $content) {
+            $path = "notification_templates/" . $template->id . "-".$lang.".html";
+            Storage::disk('local')->update($path, $content);
+        }
         return [
             "type" => "templates",
             "row" => $template
