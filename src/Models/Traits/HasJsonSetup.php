@@ -12,7 +12,7 @@ trait HasJsonSetup
     
     public function setNsetupAttribute($ar) {
         array_walk_recursive($ar, function(&$v, $k){
-            $v = is_numeric($v)?doubleval($v):$v;
+            $v = (is_numeric($v) && $k!='code')?doubleval($v):$v;
             if($v==='false')
                 $v = false;
             if($v==='true')
