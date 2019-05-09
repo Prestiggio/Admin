@@ -132,7 +132,7 @@ class AdminController extends Controller
     
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
-        $query = User::with(["profile", "medias", "contacts", "roles"]);
+        $query = User::with(["profile", "medias", "contacts", "roles", "sourcings"]);
         $add_role = __("ajouter_un_utilisateur");
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){
@@ -152,6 +152,10 @@ class AdminController extends Controller
         $users = $query->paginate(10);
         $users->map(function($item){
             $item->setAttribute("details", app("centrale")->user_detail($item));
+            $item->setAttribute("active", $item->scoped_roles->count()>0);
+            $item->sourcings->map(function($sourcing){
+                $sourcing->append('nvariants');
+            });
             return $item;
         });
         $ar = array_merge([
