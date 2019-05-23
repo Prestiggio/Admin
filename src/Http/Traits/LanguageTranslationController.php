@@ -8,6 +8,7 @@ use Ry\Admin\Models\Permission;
 use App, Auth;
 use Ry\Admin\Models\Language;
 use Ry\Admin\Models\Translation;
+use Ry\Centrale\Models\SiteRestriction;
 
 trait LanguageTranslationController
 {
@@ -26,7 +27,13 @@ trait LanguageTranslationController
             $item->append("strings");
         });
         $ar = $rows->toArray();
-        $ar['languages'] = DB::table("ry_admin_language_translations")->selectRaw("DISTINCT(lang)")->orderByRaw("FIELD(lang, 'fr') DESC")->pluck("lang");
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        $languages = [];
+        foreach($setup[Language::class] as $lang) {
+            $languages[] = $lang["code"];
+        }
+        $ar['languages'] = $languages;
         $permission = Permission::authorize(__METHOD__);
         return view("$this->theme::traductions", [
             "data" => $ar,
@@ -188,6 +195,39 @@ trait LanguageTranslationController
             'translation_string' => $translation_string
         ]);
         return $translation;
+    }
+    
+    public function get_languages() {
+        $permission = Permission::authorize(__METHOD__);
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        $languages = $setup[Language::class];
+        return view("$this->theme::ldjson", [
+            "theme" => "manager",
+            "view" => "Admin.Languages",
+            "data" => [
+                "languages" => $languages
+            ],
+            "page" => [
+                "title" => ucfirst(__("languages")),
+                "href" => '/'.request()->path(),
+                "icon" => "fa fa-globe-africa",
+                "permission" => $permission,
+                "children" => []
+            ]
+        ]);
+    }
+    
+    public function post_languages(Request $request) {
+        $ar = $request->all();
+        if(isset($ar["languages"])) {
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup[Language::class] = SiteRestriction::unescape($ar['languages']);
+            $site->nsetup = $setup;
+            $site->save();
+        }
+        
     }
 }
 ?>

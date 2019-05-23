@@ -21,6 +21,8 @@ use Ry\Admin\Mail\AccountCreated;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Mail\Preview;
 use Ry\Profile\Models\Contact;
+use Ry\Admin\Models\Language;
+use Ry\Medias\Models\Media;
 
 class AdminController extends Controller
 {
@@ -328,13 +330,13 @@ class AdminController extends Controller
         $template->arevents = $arevents;
         $template->arinjections = $ar['template']['injections'];
         $template->save();
-        foreach($ar['contents'] as $lang => $content) {
-            $path = "notification_templates/" . $template->id . "-".$lang.".html";
-            Storage::disk('local')->put($path, $content);
+        foreach($ar['contents'] as $content) {
+            $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
+            Storage::disk('local')->put($path, $content["content"]);
             $template->medias()->create([
                 "owner_id" => $this->me->id,
-                "title" => $lang,
-                "description" => isset($ar['bindings'][$lang]) ? json_encode($ar['bindings'][$lang]) : '',
+                "title" => $content["lang"],
+                "descriptif" => isset($content['bindings']) ? json_encode($content['bindings']) : '',
                 "path" => $path,
             ]);
         }
@@ -344,10 +346,23 @@ class AdminController extends Controller
     public function get_templates_edit(Request $request) {
         $template = NotificationTemplate::find($request->get("id"));
         $contents = [];
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        foreach($setup[Language::class] as $language) {
+            $contents[$language["code"]] = [
+                'lang' => $language["code"],
+                'bindings' => [
+                    "subject" => "",
+                    "signature" => ""
+                ],
+                'content' => ""
+            ];
+        }
         foreach($template->medias as $file) {
-            $contents[] = [
+            $contents[$file->title] = [
+                'id' => $file->id,
                 'lang' => $file->title,
-                'bindings' => $file->description!='' ? json_decode($file->description) : [],
+                'bindings' => $file->descriptif!='' ? json_decode($file->descriptif) : [],
                 'content' => Storage::disk("local")->get($file->path)
             ];
         }
@@ -360,7 +375,7 @@ class AdminController extends Controller
                     "title" => __("editer_la_template").' : '.$template->name,
                     "icon" => "fa fa-file-invoice"
                 ],
-                "contents" => $contents,
+                "contents" => array_values($contents),
                 "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
                 "channels" => NotificationTemplate::CHANNELS,
                 "presets" => []
@@ -384,9 +399,23 @@ class AdminController extends Controller
         $template->arevents = $arevents;
         $template->arinjections = $ar['template']['injections'];
         $template->save();
-        foreach($ar['contents'] as $lang => $content) {
-            $path = "notification_templates/" . $template->id . "-".$lang.".html";
-            Storage::disk('local')->update($path, $content);
+        foreach($ar['contents'] as $content) {
+            $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
+            if($content['id']!="") {
+                $media = Media::find($content['id']);
+                $media->descriptif = json_encode($content['bindings']);
+                $media->save();
+                Storage::disk('local')->update($path, $content["content"]);
+            }
+            elseif($content["content"]!="" && $content["bindings"]["subject"]!="") {
+                Storage::disk('local')->put($path, $content["content"]);
+                $template->medias()->create([
+                    "owner_id" => $this->me->id,
+                    "title" => $content["lang"],
+                    "descriptif" => isset($content['bindings']) ? json_encode($content['bindings']) : '',
+                    "path" => $path,
+                ]);
+            }
         }
         return [
             "type" => "templates",
