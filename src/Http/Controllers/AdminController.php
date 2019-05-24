@@ -294,6 +294,19 @@ class AdminController extends Controller
     }
     
     public function get_templates_add() {
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        $contents = [];
+        foreach($setup[Language::class] as $language) {
+            $contents[$language["code"]] = [
+                'lang' => $language["code"],
+                'bindings' => [
+                    "subject" => "",
+                    "signature" => ""
+                ],
+                'content' => Storage::disk("local")->get("mail-template.html")
+            ];
+        }
         return view("$this->theme::bs.dialog", [
             'view' => 'Editor',
             "data" => [
@@ -302,13 +315,7 @@ class AdminController extends Controller
                     "title" => __("ajouter_une_template"),
                     "icon" => "fa fa-file-invoice"
                 ],
-                "contents" => [
-                    [
-                        "lang" => App::getLocale(),
-                        "bindings" => [],
-                        "content" => Storage::disk("local")->get("mail-template.html")
-                    ]
-                ],
+                "contents" => array_values($contents),
                 "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
                 "channels" => NotificationTemplate::CHANNELS,
                 "presets" => []
@@ -340,7 +347,10 @@ class AdminController extends Controller
                 "path" => $path,
             ]);
         }
-        return $template;
+        return [
+            "type" => "templates",
+            "row" => $template
+        ];
     }
     
     public function get_templates_edit(Request $request) {

@@ -37,8 +37,8 @@ class EventCaught extends Mailable
     public function build()
     {
         //get the template file
-        $this->from("no-reply@".env('APP_DOMAIN'), $this->template->arinjections['signature']);
-        $this->subject($this->template->arinjections['subject']);
+        $this->from("no-reply@".env('APP_DOMAIN'), isset($this->template->arinjections['signature']) ? $this->template->arinjections['signature'] : env('APP_DOMAIN'));
+        $this->subject(isset($this->template->arinjections['subject']) ? $this->template->arinjections['subject'] : '');
         list($to, $payload) = $this->data;
         $site = app(SiteScope::class)->getSite();
         if(!$site->nsetup['emailing']) {
