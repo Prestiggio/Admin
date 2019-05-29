@@ -25,19 +25,7 @@ class AuthComposer
         if($this->me) {
             $guard = $this->me->guard;
             if($guard=='admin') {
-                $view->with('admin', [
-                    [
-                        'title' => __('autorisations_et_raccourcis'),
-                        'icon' => 'fa fa-shield-alt',
-                        'href' => '#dialog/menus',
-                        'data' => 'page'
-                    ],
-                    [
-                        'title' => ucfirst(__('traductions')),
-                        'icon' => 'fa fa-language',
-                        'href' => '/'.__('get_translations')
-                    ]
-                ]);
+                $view->with('admin', []);
             }
             $sections = app("ryadmin")->getSections($guard);
             foreach($sections as $section) {

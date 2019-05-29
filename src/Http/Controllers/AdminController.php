@@ -91,6 +91,7 @@ class AdminController extends Controller
     
     public function post_menus(Request $request) {
         $ar = $request->all();
+        app("centrale")->setSite($ar['site_id']);
         $layouts = Layout::with(["sections", "roles.layoutOverrides"])->get();
         return view("$this->theme::admin.dialogs.menus", [
             "navigationByRole" => [
@@ -153,11 +154,7 @@ class AdminController extends Controller
         }
         $users = $query->paginate(10);
         $users->map(function($item){
-            $item->setAttribute("details", app("centrale")->user_detail($item));
             $item->setAttribute("active", $item->scoped_roles->count()>0);
-            $item->sourcings->map(function($sourcing){
-                $sourcing->append('nvariants');
-            });
             return $item;
         });
         $ar = array_merge([
@@ -165,7 +162,9 @@ class AdminController extends Controller
             'add_role' => $add_role,
             'roles' => [2]
         ], $request->all());
-        return view("$this->theme::bs.users", [
+        return view("$this->theme::ldjson", [
+            "theme" => "admin",
+            "view" => "Admin.User",
             "data" => array_merge($users->toArray(), $ar),
             "page" => [
                 "title" => "Liste des utilisateurs",
@@ -328,14 +327,18 @@ class AdminController extends Controller
         $ar = $request->all();
         $template = new NotificationTemplate();
         $template->name = $ar['template']['name'];
-        $template->archannels = $ar['template']['channels'];
-        $events = array_keys($ar['template']['events']);
+        $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
         $arevents = [];
-        foreach($events as $event) {
-            $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+        if(isset($ar['template']['events'])) {
+            $events = array_keys($ar['template']['events']);
+            foreach($events as $event) {
+                $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+            }
         }
         $template->arevents = $arevents;
-        $template->arinjections = $ar['template']['injections'];
+        if(isset($ar['template']['injections'])) {
+            $template->arinjections = $ar['template']['injections'];
+        }
         $template->save();
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
@@ -398,7 +401,7 @@ class AdminController extends Controller
         $ar = $request->all();
         $template = NotificationTemplate::find($request->get("id"));
         $template->name = $ar['template']['name'];
-        $template->archannels = $ar['template']['channels'];
+        $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
         $arevents = [];
         if(isset($ar['template']['events'])) {
             $events = array_keys($ar['template']['events']);
@@ -407,7 +410,16 @@ class AdminController extends Controller
             }
         }
         $template->arevents = $arevents;
-        $template->arinjections = $ar['template']['injections'];
+        if(isset($ar['template']['injections'])) {
+            if(!isset($ar['template']['injections']['log']))
+                $ar['template']['injections']['log'] = false;
+            $template->arinjections = $ar['template']['injections'];
+        }
+        else {
+            $template->arinjections = [
+                'log' => false
+            ];
+        }
         $template->save();
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";

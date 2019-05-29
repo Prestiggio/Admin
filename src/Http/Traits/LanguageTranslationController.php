@@ -27,6 +27,13 @@ trait LanguageTranslationController
             $item->append("strings");
         });
         $ar = $rows->toArray();
+        if($request->has("site_id")) {
+            session()->put("admin_site_id", $request->get("site_id"));
+            app("centrale")->setSite($request->get("site_id"));
+        }
+        elseif(session()->has("admin_site_id")) {
+            app("centrale")->setSite(session()->get("admin_site_id"));
+        }
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
         $languages = [];
