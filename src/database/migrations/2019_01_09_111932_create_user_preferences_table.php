@@ -15,7 +15,7 @@ class CreateUserPreferencesTable extends Migration
     {
         Schema::create('ry_admin_user_preferences', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->text('data');
             $table->timestamps();
         });
