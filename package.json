@@ -1,0 +1,19 @@
+{
+  "name": "@ry/admin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/ressources/js/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@topmora.com:/opt/git/modules/ry/admin.git"
+  },
+  "keywords": [
+    "Administration",
+    "dashboard"
+  ],
+  "author": "Landr Rakotoarivelo",
+  "license": "ISC"
+}
