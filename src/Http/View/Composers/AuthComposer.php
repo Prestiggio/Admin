@@ -33,17 +33,23 @@ class AuthComposer
                 $view->with($section->name, $section->setup);
             }
         }
+        $breadcrumbs = [
+            "home" => [
+                'title' => __('accueil'),
+                'href' => '/',
+                'icon' => 'fa fa-home'
+            ]
+        ];
+        $existingData = $view->getData();
+        if(isset($existingData['parents'])) {
+            $breadcrumbs = array_merge($breadcrumbs, $existingData['parents']);
+        }
+        if(isset($existingData['page']))
+            $breadcrumbs[$existingData['page']['href']] = $existingData['page'];
         $view->with("breadcrumbs", [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
-            'itemListElement' => [
-                [
-                    '@type' => 'ListItem',
-                    'position' => 1,
-                    'name' => __('accueil'),
-                    'item' => '/'
-                ]
-            ],
+            'itemListElement' => array_values($breadcrumbs),
             'current' => ['page']
         ]);
     }
