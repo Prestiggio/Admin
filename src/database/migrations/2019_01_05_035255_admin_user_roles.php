@@ -16,12 +16,8 @@ class AdminUserRoles extends Migration
         Schema::create('ry_admin_user_roles', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('role_id');
-            $table->unsignedInteger('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
-            
-            $table->foreign('role_id')->references('id')->on('ry_admin_roles')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unique(['role_id', 'user_id']);
         });
     }
 
