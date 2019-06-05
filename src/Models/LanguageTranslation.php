@@ -17,11 +17,18 @@ class LanguageTranslation extends Model
     
     protected $appends = ["name"];
     
+    public static $exportOnSave = true;
+    
     protected static function boot() {
         parent::boot();
         
         static::addGlobalScope('frfirst', function($q){
             $q->orderByRaw("FIELD(lang, 'fr') DESC");
+        });
+        
+        static::saved(function(){
+            if(static::$exportOnSave)
+                static::export();
         });
     }
     
