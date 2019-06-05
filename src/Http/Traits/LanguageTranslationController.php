@@ -8,10 +8,12 @@ use Ry\Admin\Models\Permission;
 use App, Auth;
 use Ry\Admin\Models\Language;
 use Ry\Admin\Models\Translation;
-use Ry\Centrale\Models\SiteRestriction;
+use Ry\Admin\Models\Traits\HasJsonSetup;
 
 trait LanguageTranslationController
 {
+    use HasJsonSetup;
+    
     public function get_translations(Request $request) {
         $perPage = 10;
         if($request->has("s") && $request->get('s')!='') {
@@ -230,7 +232,7 @@ trait LanguageTranslationController
         if(isset($ar["languages"])) {
             $site = app("centrale")->getSite();
             $setup = $site->nsetup;
-            $setup[Language::class] = SiteRestriction::unescape($ar['languages']);
+            $setup[Language::class] = static::unescape($ar['languages']);
             $site->nsetup = $setup;
             $site->save();
         }

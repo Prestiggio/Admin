@@ -5,26 +5,23 @@ namespace Ry\Admin\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\View;
-use Ry\Profile\Models\NotificationTemplate;
-use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Support\Facades\Storage;
+use Twig\Loader\ArrayLoader;
+use Twig\Environment;
 
-class EventCaught extends Mailable
+class UserInsertCaught extends Mailable
 {
     use Queueable, SerializesModels;
     
-    private $data, $template;
+    private $data;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($template, $data)
+    public function __construct($data)
     {
-        $this->template = $template;
         $this->data = $data;
     }
 
@@ -36,17 +33,19 @@ class EventCaught extends Mailable
     public function build()
     {
         //get the template file
-        $this->from("no-reply@".env('APP_DOMAIN'), isset($this->template->arinjections['signature']) ? $this->template->arinjections['signature'] : env('APP_DOMAIN'));
-        $this->subject(isset($this->template->arinjections['subject']) ? $this->template->arinjections['subject'] : '');
+        $this->from("no-reply@".env('APP_DOMAIN'), env('APP_DOMAIN'));
+        $this->subject('Création de votre compte ' . env('APP_NAME'));
         list($to, $payload) = $this->data;
+        $payload['signature'] = env('APP_NAME');
+        $payload['contact_email'] = env('DEBUG_RECIPIENT_EMAIL');
         $site = app("centrale")->getSite();
         if(!$site->nsetup['emailing']) {
             $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
-        $loader = new \Twig_Loader_Array([
-            "email" => Storage::disk('local')->get($this->template->medias()->first()->path)
+        $loader = new ArrayLoader([
+            "email" => file_get_contents(__DIR__.'/../assets/userinsert.twig')
         ]);
-        $twig = new \Twig_Environment($loader);
+        $twig = new Environment($loader);
         return $this->html($twig->render("email", $payload));
     }
 }

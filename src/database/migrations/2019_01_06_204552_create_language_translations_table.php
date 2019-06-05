@@ -22,11 +22,12 @@ WHERE t0.lang = 'fr';
          */
         
         Schema::create('ry_admin_language_translations', function (Blueprint $table) {
+            $table->increments('id');
             $table->unsignedInteger('translation_id');
-            $table->char('lang', 2);
+            $table->char('lang', 15);
             $table->text('translation_string');
             
-            $table->primary(['translation_id', 'lang'], 'translation_id_lang');
+            $table->unique(['translation_id', 'lang'], 'translation_id_lang');
         });
     }
 

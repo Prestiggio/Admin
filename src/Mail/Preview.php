@@ -7,7 +7,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\View;
-use Ry\Centrale\SiteScope;
 use Ry\Profile\Models\NotificationTemplate;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Support\Facades\Storage;
@@ -41,7 +40,7 @@ class Preview extends Mailable
     {
         //get the template file
         $this->from("no-reply@".env('APP_DOMAIN'), $this->signature);
-        $site = app(SiteScope::class)->getSite();
+        $site = app("centrale")->getSite();
         if(!$site->nsetup['emailing']) {
             $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }

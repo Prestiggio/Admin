@@ -22,6 +22,7 @@ use Ry\Admin\Console\Commands\Ability;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Ry\Admin\Mail\EventCaught;
+use Ry\Admin\Mail\UserInsertCaught;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Console\Commands\RegisterEvent;
 use Ry\Admin\RyAdmin;
@@ -162,6 +163,36 @@ HERE;
         Event::listen(RequestHandled::class, function(){
             if(isset($_GET["debug"])) {
                 app("ryadmin")->terminate();
+            }
+        });
+        
+        Event::listen("ryadminnotify*", function($eventName, array $data){
+            $site = app("centrale")->getSite();
+            
+            if(!Storage::disk("local")->exists("events.log")) {
+                $events = [];
+            }
+            else {
+                $events = json_decode(Storage::disk("local")->get("events.log"), true);
+            }
+            $events[$eventName] = [
+                "latest_execution" => Carbon::now()
+            ];
+            Storage::disk("local")->put("events.log", json_encode($events));
+            if($site->nsetup['emailing'])
+                list($to) = $data;
+            else
+                $to = env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
+            
+            if($eventName=='ryadminnotify_insert_user') {
+                Mail::to($to)->send(new UserInsertCaught($data));
+            }
+            else {
+                $templates = NotificationTemplate::where("events", "LIKE", '%'.$eventName.'%')
+                ->where("channels", "LIKE", '%MailSender%')->get();
+                foreach($templates as $template) {
+                    Mail::to($to)->send(new EventCaught($template, $data));
+                }
             }
         });
     }

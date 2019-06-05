@@ -56,7 +56,8 @@ class UserZero extends Command {
 		$credentials = [
 				"name" => $this->ask("Nom:"),
 				"email" => $this->ask("Email:"),
-				"password" => $this->secret("Mot de passe:")
+				"password" => $this->secret("Mot de passe:"),
+		        "guard" => $this->choice("Interface:", ["admin", "manager"], "admin")
 		];
 		
 		$confirmation = $this->secret("Confirmer le mot de passe:");
@@ -76,11 +77,13 @@ class UserZero extends Command {
 		$user = User::create([
 			"name" => $credentials["name"],
 			"email" => $credentials["email"],
-			"password" => bcrypt($credentials["password"])	
+			"password" => bcrypt($credentials["password"]),
+		    "guard" => $credentials['guard'],
+		    "active" => true
 		]);
-		$user->roles()->create([
+		$user->roles()->updateOrCreate([
 					"name" => "admin"
-			]);
+	    ]);
 		
 		return $this->info("Vous etes passe au role d'administrateur - Merci :)");
 	}

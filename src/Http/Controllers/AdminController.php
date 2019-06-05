@@ -56,6 +56,17 @@ class AdminController extends Controller
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
     
+    public function get_dashboard() {
+        return view("$this->theme::ldjson", [
+            "theme" => $this->theme,
+            "view" => "",
+            "page" => [
+                "title" => __("Tableau de bord"),
+                "href" => "/"
+            ]
+        ]);
+    }
+    
     public function post_update_menus(Request $request) {
         $ar = $request->all();
         foreach($ar["layouts"] as $layout) {
@@ -110,32 +121,37 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::bs.add_user", [
-            "row" => array_merge([
-                "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
-                "select_roles" => $roles->get()
-            ], $request->all())]);
+        return view("$this->theme::fragment", [
+            "view" => "Ry.Admin.User",
+            "subview" => "form",
+            "action" => "/insert_user",
+            "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+            "select_roles" => $roles->get()
+        ]);
     }
     
     public function get_edit_user($user_id, Request $request) {
-        $row = User::with(["medias", "contacts", "roles"])->find($user_id)->toArray();
+        $row = User::with(["profile", "medias", "contacts", "roles"])->find($user_id);
+        $row->append('nactivities');
+        $row->append('thumb');
         if($request->has("roles")) {
             $roles = Role::with(["permissions"])->whereIn("id", $request->get("roles"));
         }
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::bs.edit_user", [
-            'row' => array_merge([
-                "view" => "form",
-                "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
-                "select_roles" => $roles->get()
-            ], $row)]);
+        return view("$this->theme::fragment", array_merge([
+            "view" => "Ry.Admin.User",
+            "subview" => "form",
+            "action" => "/update_user",
+            "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+            "select_roles" => $roles->get()
+        ], $row->toArray()));
     }
     
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
-        $query = User::with(["profile", "medias", "contacts", "roles", "sourcings"]);
+        $query = User::with(["profile", "medias", "contacts", "roles"]);
         $add_role = __("ajouter_un_utilisateur");
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){
@@ -154,20 +170,19 @@ class AdminController extends Controller
         }
         $users = $query->paginate(10);
         $users->map(function($item){
-            $item->setAttribute("active", $item->scoped_roles->count()>0);
-            return $item;
+            $item->append('nactivities');
+            $item->append('thumb');
         });
         $ar = array_merge([
             'view' => 'list',
-            'add_role' => $add_role,
-            'roles' => [2]
+            'add_role' => $add_role
         ], $request->all());
         return view("$this->theme::ldjson", [
-            "theme" => "admin",
-            "view" => "Admin.User",
+            "theme" => $this->theme,
+            "view" => "Ry.Admin.User",
             "data" => array_merge($users->toArray(), $ar),
             "page" => [
-                "title" => "Liste des utilisateurs",
+                "title" => __("liste_des_utilisateurs"),
                 "href" => "/users",
                 "permission" => $permission,
                 "icon" => "fa fa-users"
@@ -227,12 +242,14 @@ class AdminController extends Controller
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $user['contacts']);
         
-        event("rynotify_insert_user", [$_user, [
+        event("ryadminnotify_insert_user", [$_user, [
             'user' => $_user, 
             'password' => $password]]);
         
         $_user->load("contacts");
         $_user->load("medias");
+        $_user->append('nactivities');
+        $_user->append('thumb');
         
         return [
             "row" => $_user,
@@ -278,11 +295,15 @@ class AdminController extends Controller
             ]);
         }
         
+        $_user->load(["profile", "medias", "contacts", "roles"]);
+        $_user->append('nactivities');
+        $_user->append('thumb');
+        
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
         
         return [
             "type" => "users",
-            "row" => User::with(["medias", "contacts", "roles"])->find($_user->id)
+            "row" => $_user
         ];
     }
     

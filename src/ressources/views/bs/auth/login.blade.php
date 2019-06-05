@@ -6,7 +6,7 @@
         <div class="col-md-4">
             <div class="card border-0">
                 <div class="card-header login-header">
-                	<h2 class="m-0">Administration de la Centrale</h2>
+                	<h2 class="m-0">{{$page['title']}}</h2>
                 </div>
 
                 <div class="card-body p-0">
