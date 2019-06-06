@@ -20,9 +20,10 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
-    @if(!env('APP_DEBUG'))
+    @if(env('APP_ENV')!='local')
     <link href="/style1.css" rel="stylesheet">
     <link href="/style0.css" rel="stylesheet">
+    <link href="/ryadmin.css" rel="stylesheet">
     @endif
 </head>
 <body class="full-screen">
@@ -31,12 +32,12 @@
             @yield('content')
         </main>
     </div>
-    @if(env('APP_DEBUG'))
+    @if(env('APP_ENV')=='local')
     <script type="text/javascript" src="{{env('APP_URL')}}:3000/ryadmin.amelior.js"></script>
     @else
-    <script type="text/javascript" src="/vendors~admin~manager.amelior.js"></script>
-    <script type="text/javascript" src="/admin~manager.amelior.js"></script>
-    <script type="text/javascript" src="/admin.amelior.js"></script>
+    <script type="text/javascript" src="/vendors~cardit~manager~ryadmin.amelior.js"></script>
+	<script type="text/javascript" src="/cardit~manager~ryadmin.amelior.js"></script>
+    <script type="text/javascript" src="/ryadmin.amelior.js"></script>
     @endif
 </body>
 </html>
