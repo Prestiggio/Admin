@@ -41,8 +41,7 @@ foreach($__vars as $k => $v) {
 	@if(env('APP_ENV')=='local')
 	<script type="text/javascript" src="/scripts/{{$theme}}.amelior.js"></script>
 	@else
-	<script type="text/javascript" src="/vendors~cardit~manager~ryadmin.amelior.js"></script>
-	<script type="text/javascript" src="/cardit~manager~ryadmin.amelior.js"></script>
+	@include("scripts.admin")
 	<script type="text/javascript" src="/ryadmin.amelior.js"></script>
 	@endif
 </body>

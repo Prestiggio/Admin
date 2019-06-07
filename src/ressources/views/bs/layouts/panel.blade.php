@@ -35,12 +35,11 @@
     <nav class="navbar fixed-bottom navbar-dark bg-dark">
     	<script type="application/json+ryAdminTools" id="adminfooter">{!!json_encode(['admin' => $admin, 'page' => $page])!!}</script>
     </nav>
-    @if(env('APP_DEBUG'))
+    @if(env('APP_ENV')=='local')
     <script type="text/javascript" src="{{env('APP_URL')}}:3000/admin.amelior.js"></script>
     @else
-    <script type="text/javascript" src="/vendors~admin~manager.amelior.js"></script>
-    <script type="text/javascript" src="/admin~manager.amelior.js"></script>
-    <script type="text/javascript" src="/admin.amelior.js"></script>
+    @include("scripts.admin")
+    <script type="text/javascript" src="/ryadmin.amelior.js"></script>
     @endif
 </body>
 @stop

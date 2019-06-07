@@ -35,8 +35,7 @@
     @if(env('APP_ENV')=='local')
     <script type="text/javascript" src="{{env('APP_URL')}}:3000/ryadmin.amelior.js"></script>
     @else
-    <script type="text/javascript" src="/vendors~cardit~manager~ryadmin.amelior.js"></script>
-	<script type="text/javascript" src="/cardit~manager~ryadmin.amelior.js"></script>
+    @include("scripts.admin")
     <script type="text/javascript" src="/ryadmin.amelior.js"></script>
     @endif
 </body>
