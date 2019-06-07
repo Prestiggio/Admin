@@ -46,6 +46,7 @@ trait LanguageTranslationController
         $permission = Permission::authorize(__METHOD__);
         return view("$this->theme::traductions", [
             "data" => $ar,
+            "theme" => $this->theme,
             "page" => [
                 "title" => ucfirst(__("traductions")),
                 "href" => '/'.request()->path(),
@@ -212,8 +213,8 @@ trait LanguageTranslationController
         $setup = $site->nsetup;
         $languages = $setup[Language::class];
         return view("$this->theme::ldjson", [
-            "theme" => "manager",
-            "view" => "Admin.Languages",
+            "theme" => $this->theme,
+            "view" => "Ry.Admin.Languages",
             "data" => [
                 "languages" => $languages
             ],

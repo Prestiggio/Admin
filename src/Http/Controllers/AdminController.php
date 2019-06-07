@@ -56,7 +56,7 @@ class AdminController extends Controller
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
     
-    public function get_dashboard() {
+    public function get_dashboard(Request $request) {
         return view("$this->theme::ldjson", [
             "theme" => $this->theme,
             "view" => "",
@@ -328,7 +328,7 @@ class AdminController extends Controller
             ];
         }
         return view("$this->theme::bs.dialog", [
-            'view' => 'Editor',
+            'view' => 'Ry.Profile.Editor',
             "data" => [
                 'action' => '/templates_insert',
                 "page" => [
@@ -402,7 +402,7 @@ class AdminController extends Controller
         }
         $data = $template->toArray();
         return view("$this->theme::bs.dialog", [
-            "view" => "Editor",
+            "view" => "Ry.Profile.Editor",
             "data" => array_merge([
                 'action' => '/templates_update',
                 "page" => [
