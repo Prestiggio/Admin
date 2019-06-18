@@ -20,7 +20,7 @@ class Layout extends Model
     }
     
     public function roles() {
-        return $this->belongsToMany(Role::class, "ry_admin_role_layouts", "layout_id", "role_id");
+        return $this->belongsToMany(Role::class, "ry_admin_role_layouts", "layout_id", "role_id")->groupBy('role_id');
     }
     
     public function sections() {
