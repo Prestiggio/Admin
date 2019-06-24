@@ -54,6 +54,14 @@ class RyAdmin
         return $this->data;
     }
     
+    public function route() {
+        if (! app()->routesAreCached()) {
+            app('router')->group(['namespace' => '\Ry\Admin\Http\Controllers'], function(){
+                require __DIR__.'/Http/routes.php';
+            });
+        }
+    }
+    
     public function terminate() {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
         $response = response()->json($this->data);

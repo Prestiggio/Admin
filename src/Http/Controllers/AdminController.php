@@ -23,6 +23,9 @@ use Ry\Admin\Mail\Preview;
 use Ry\Profile\Models\Contact;
 use Ry\Admin\Models\Language;
 use Ry\Medias\Models\Media;
+use Ry\Admin\Models\Event;
+use Illuminate\Filesystem\Filesystem;
+use Ry\Admin\Models\Model;
 
 class AdminController extends Controller
 {
@@ -65,6 +68,59 @@ class AdminController extends Controller
                 "href" => "/"
             ]
         ]);
+    }
+    
+    public function get_events() {
+        return view("$this->theme::ldjson", [
+            'theme' => $this->theme,
+            'view' => 'Ry.Admin.Events',
+            "data" => Event::all(),
+            'page' => [
+                'title' => __('Gestion des évènements'),
+                'href' => '/'.__('get_events')
+            ]
+        ]);
+    }
+    
+    public function get_event_models(Request $request) {
+        $row = Event::find($request->get('event_id'))->append('nsetup');
+        return view("$this->theme::fragment", [
+            'theme' => $this->theme,
+            'view' => 'Ry.Admin.Model.Check',
+            'data' => Model::all(),
+            'row' => $row
+        ]);
+    }
+    
+    public function post_event_models(Request $request) {
+        $ar = $request->all();
+        $ar = Model::unescape($ar);
+        $event = Event::find($request->get('event_id'));
+        $items = [];
+        foreach($ar['models'] as $model_id => $checked) {
+            if($checked)
+                $items[] = $model_id;
+        }
+        $event->nsetup = [
+            'models' => $items
+        ];
+        $event->save();
+        return $items;
+    }
+    
+    public function post_events(Request $request) {
+        $event = Event::find($request->get('id'));
+        if(!$event) {
+            $event = new Event();
+        }
+        $event->code = $request->get('code');
+        $event->descriptif = $request->get('descriptif');
+        $event->save();
+        return $event;
+    }
+    
+    public function delete_events(Request $request) {
+        Event::where('id', '=', $request->get('id'))->delete();
     }
     
     public function post_update_menus(Request $request) {
@@ -188,6 +244,41 @@ class AdminController extends Controller
                 "icon" => "fa fa-users"
             ]
         ]);
+    }
+    
+    public function models() {
+        $filesystem = new Filesystem();
+        $ar = $filesystem->allFiles(dirname(dirname(dirname(dirname(__DIR__)))));
+        foreach($ar  as $a) {
+            if(preg_match('/models/i', $a->getPath()) 
+                && !preg_match('/trait/i', $a->getPath())
+                && !preg_match('/ry\/creno/i', $a->getPath())
+                && !preg_match('/ry\/macentrale/i', $a->getPath())
+                && !preg_match('/ry\/md/i', $a->getPath())) {
+                $txt = $a->getContents();
+                
+                if(preg_match('/interface /', $txt))
+                    continue;
+                
+                preg_match('/namespace ([\w\\\\]+)/i', $txt, $ns);
+                preg_match('/class (\w+)/', $txt, $cl);
+                $rr = (isset($ns[1])?$ns[1]:'') . '\\' . (isset($cl[1])?$cl[1]:'');
+                $m = Model::where('qualified_name', '=', $rr)->first();
+                if(!$m)
+                    $m = new Model();
+                $m->qualified_name = $rr;
+                $m->path = $a->getPath();
+                $d = [];
+                try {
+                    $d = $rr::first();
+                }
+                catch(\Exception $e) {
+                    
+                }
+                $m->nsetup = $d ? json_decode($d->toJson(), true) : [];
+                $m->save();
+            }
+        }
     }
     
     public function post_insert_user(Request $request) {
@@ -327,18 +418,32 @@ class AdminController extends Controller
                 'content' => Storage::disk("local")->get("mail-template.html")
             ];
         }
-        return view("$this->theme::bs.dialog", [
+        $events = Event::all();
+        $events->each(function($item){
+            $item->append('nsetup');
+            $item->makeHidden('setup');
+        });
+        return view("$this->theme::ldjson", [
+            'theme' => $this->theme,
             'view' => 'Ry.Profile.Editor',
-            "data" => [
-                'action' => '/templates_insert',
-                "page" => [
-                    "title" => __("ajouter_une_template"),
-                    "icon" => "fa fa-file-invoice"
-                ],
-                "contents" => array_values($contents),
-                "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
-                "channels" => NotificationTemplate::CHANNELS,
-                "presets" => []
+            'action' => '/templates_insert',
+            "contents" => array_values($contents),
+            "events" => Event::all(),
+            "channels" => NotificationTemplate::CHANNELS,
+            "presets" => [
+                [
+                    "title" => __("e_mail"),
+                    'href' => __('get_templates'),
+                    'icon' => 'fa fa-users'
+                ]
+            ],
+            "page" => [
+                "title" => __("ajouter_une_template"),
+                "icon" => "fa fa-file-invoice",
+                "href" => '/'.__('get_templates_add')
+            ],
+            "ckeditor" => [
+                "modules" => ["ry"]
             ]
         ]);
     }
@@ -371,6 +476,9 @@ class AdminController extends Controller
                 "path" => $path,
             ]);
         }
+        $template->setAttribute('title', $template->name);
+        $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
+        $template->makeVisible(['title', 'subject']);
         return [
             "type" => "templates",
             "row" => $template
@@ -401,20 +509,29 @@ class AdminController extends Controller
             ];
         }
         $data = $template->toArray();
-        return view("$this->theme::bs.dialog", [
+        return view("$this->theme::ldjson", array_merge([
+            'theme' => $this->theme,
             "view" => "Ry.Profile.Editor",
-            "data" => array_merge([
-                'action' => '/templates_update',
-                "page" => [
-                    "title" => __("editer_la_template").' : '.$template->name,
-                    "icon" => "fa fa-file-invoice"
-                ],
-                "contents" => array_values($contents),
-                "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
-                "channels" => NotificationTemplate::CHANNELS,
-                "presets" => []
-            ], $data)
-        ]);
+            'action' => '/templates_update',
+            "contents" => array_values($contents),
+            "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
+            "channels" => NotificationTemplate::CHANNELS,
+            "presets" => [
+                [
+                    "title" => __("e_mail"),
+                    'href' => __('get_templates'),
+                    'icon' => 'fa fa-users'
+                ]
+            ],
+            "page" => [
+                "title" => __("editer_la_template").' : '.$template->name,
+                'href' => '/'. __('get_templates_edit').'?id='.$template->id,
+                "icon" => "fa fa-file-invoice"
+            ],
+            "ckeditor" => [
+                "modules" => ["ry"]
+            ]
+        ], $data));
     }
     
     public function post_templates_update(Request $request) {
@@ -460,6 +577,9 @@ class AdminController extends Controller
                 ]);
             }
         }
+        $template->setAttribute('title', $template->name);
+        $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
+        $template->makeVisible(['title', 'subject']);
         return [
             "type" => "templates",
             "row" => $template

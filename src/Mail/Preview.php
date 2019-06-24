@@ -11,6 +11,7 @@ use Ry\Profile\Models\NotificationTemplate;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Support\Facades\Storage;
 use Auth;
+use Twig\Lexer;
 
 class Preview extends Mailable
 {
@@ -45,7 +46,7 @@ class Preview extends Mailable
             $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         $loader = new \Twig_Loader_Array([
-            "email" => $this->content
+            "email" => str_replace("</twig>", "}}", str_replace("<twig>", "{{", $this->content))
         ]);
         $twig = new \Twig_Environment($loader);
         return $this->html($twig->render("email", $this->data));

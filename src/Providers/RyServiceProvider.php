@@ -27,6 +27,7 @@ use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Console\Commands\RegisterEvent;
 use Ry\Admin\RyAdmin;
 use Illuminate\Foundation\Http\Events\RequestHandled;
+use Ry\Admin\Console\Commands\AdminModel;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -183,16 +184,10 @@ HERE;
                 list($to) = $data;
             else
                 $to = env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
-            
-            if($eventName=='ryadminnotify_insert_user') {
-                Mail::to($to)->send(new UserInsertCaught($data));
-            }
-            else {
-                $templates = NotificationTemplate::where("events", "LIKE", '%'.$eventName.'%')
-                ->where("channels", "LIKE", '%MailSender%')->get();
-                foreach($templates as $template) {
-                    Mail::to($to)->send(new EventCaught($template, $data));
-                }
+            $templates = NotificationTemplate::where("events", "LIKE", '%'.$eventName.'%')
+            ->where("channels", "LIKE", '%MailSender%')->get();
+            foreach($templates as $template) {
+                Mail::to($to)->send(new EventCaught($template, $data));
             }
         });
     }
@@ -230,6 +225,11 @@ HERE;
     	    return new RegisterEvent();
     	});
     	$this->commands(RegisterEvent::class);
+    	
+    	$this->app->singleton('ryadmin.models', function($app){
+    	    return new AdminModel();
+    	});
+    	$this->commands('ryadmin.models');
     }
     public function map()
     {    	
