@@ -287,8 +287,13 @@ class AdminController extends Controller
         if(User::whereEmail($user['email'])->exists())
             abort(410, __("L'adresse email est déjà utilisé"));
         
-        $faker = Factory::create(App::getLocale());
-        $password = $faker->password(8);
+        if(env('APP_ENV')!='production') {
+            $password = 'admin12345';
+        }
+        else {
+            $faker = Factory::create(App::getLocale());
+            $password = $faker->password(8);
+        }
         
         $roles = Role::whereIn("id", $request->get("roles"))->get();
         $layout = "";
