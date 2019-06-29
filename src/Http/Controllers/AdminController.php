@@ -479,10 +479,13 @@ class AdminController extends Controller
         $template->setAttribute('title', $template->name);
         $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
         $template->makeVisible(['title', 'subject']);
-        return [
-            "type" => "templates",
-            "row" => $template
-        ];
+        return redirect('/templates_edit?id='.$template->id)->with('message', [
+            'class' => 'alert-success',
+            'content' => __('La template <a href=":link">:template</a> a été ajouté avec succès', [
+                'template' => $template->name,
+                'link' => '/templates_edit?id='.$template->id
+            ])
+        ]);
     }
     
     public function get_templates_edit(Request $request) {
@@ -580,10 +583,13 @@ class AdminController extends Controller
         $template->setAttribute('title', $template->name);
         $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
         $template->makeVisible(['title', 'subject']);
-        return [
-            "type" => "templates",
-            "row" => $template
-        ];
+        return redirect('/templates_edit?id='.$template->id)->with('message', [
+            'class' => 'alert-success',
+            'content' => __('La template <a href=":link">:template</a> a été modifié avec succès', [
+                'template' => $template->name,
+                'link' => '/templates_edit?id='.$template->id
+            ])
+        ]);
     }
     
     public function delete_templates(Request $request) {
