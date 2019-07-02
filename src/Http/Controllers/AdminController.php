@@ -31,6 +31,8 @@ class AdminController extends Controller
 {
     use LanguageTranslationController;
     
+    protected $viewHint = "::";
+    
     protected $theme = "ryadmin";
     
     protected $me;
@@ -60,7 +62,7 @@ class AdminController extends Controller
     }
     
     public function get_dashboard(Request $request) {
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
             "view" => "",
             "page" => [
@@ -71,7 +73,7 @@ class AdminController extends Controller
     }
     
     public function get_events() {
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Events',
             "data" => Event::all(),
@@ -84,7 +86,7 @@ class AdminController extends Controller
     
     public function get_event_models(Request $request) {
         $row = Event::find($request->get('event_id'))->append('nsetup');
-        return view("$this->theme::fragment", [
+        return view("$this->theme{$this->viewHint}fragment", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Model.Check',
             'data' => Model::all(),
@@ -160,7 +162,7 @@ class AdminController extends Controller
         $ar = $request->all();
         app("centrale")->setSite($ar['site_id']);
         $layouts = Layout::with(["sections", "roles.layoutOverrides"])->get();
-        return view("$this->theme::admin.dialogs.menus", [
+        return view("$this->theme{$this->viewHint}admin.dialogs.menus", [
             "navigationByRole" => [
                 "page" => $ar,
                 "layouts" => $layouts,
@@ -177,7 +179,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::fragment", [
+        return view("$this->theme{$this->viewHint}fragment", [
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/insert_user",
@@ -196,7 +198,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::fragment", array_merge([
+        return view("$this->theme{$this->viewHint}fragment", array_merge([
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/update_user",
@@ -233,7 +235,7 @@ class AdminController extends Controller
             'view' => 'list',
             'add_role' => $add_role
         ], $request->all());
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
             "view" => "Ry.Admin.User",
             "data" => array_merge($users->toArray(), $ar),
@@ -428,7 +430,7 @@ class AdminController extends Controller
             $item->append('nsetup');
             $item->makeHidden('setup');
         });
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             'theme' => $this->theme,
             'view' => 'Ry.Profile.Editor',
             'action' => '/templates_insert',
@@ -517,7 +519,7 @@ class AdminController extends Controller
             ];
         }
         $data = $template->toArray();
-        return view("$this->theme::ldjson", array_merge([
+        return view("$this->theme{$this->viewHint}ldjson", array_merge([
             'theme' => $this->theme,
             "view" => "Ry.Profile.Editor",
             'action' => '/templates_update',

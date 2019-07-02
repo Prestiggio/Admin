@@ -28,7 +28,6 @@ trait LanguageTranslationController
         $rows->map(function($item){
             $item->append("strings");
         });
-        $ar = $rows->toArray();
         if($request->has("site_id")) {
             session()->put("admin_site_id", $request->get("site_id"));
             app("centrale")->setSite($request->get("site_id"));
@@ -39,14 +38,17 @@ trait LanguageTranslationController
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
         $languages = [];
-        foreach($setup[Language::class] as $lang) {
-            $languages[] = $lang["code"];
+        if(isset($setup[Language::class])) {
+            foreach($setup[Language::class] as $lang) {
+                $languages[] = $lang["code"];
+            }
         }
-        $ar['languages'] = $languages;
         $permission = Permission::authorize(__METHOD__);
-        return view("$this->theme::traductions", [
-            "data" => $ar,
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
+            "view" => "Ry.Admin.Translator",
+            "data" => $rows,
+            "languages" => $languages,
             "page" => [
                 "title" => ucfirst(__("traductions")),
                 "href" => '/'.request()->path(),
@@ -93,11 +95,11 @@ trait LanguageTranslationController
                 ];
             }
         }
-        return view("$this->theme::dialogs.languages", [
-            "presets" => [
-                "locale" => App::getLocale(),
-                "presets" => $presets
-            ]
+        return view("$this->theme{$this->viewHint}fragment", [
+            "theme" => $this->theme,
+            "view" => "Ry.Admin.Traductions",
+            "presets" => $presets, 
+            "locale" => App::getLocale()
         ]);
     }
     
@@ -211,8 +213,8 @@ trait LanguageTranslationController
         $permission = Permission::authorize(__METHOD__);
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
-        $languages = $setup[Language::class];
-        return view("$this->theme::ldjson", [
+        $languages = isset($setup[Language::class]) ? $setup[Language::class] : [];
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
             "view" => "Ry.Admin.Languages",
             "data" => [
@@ -237,7 +239,6 @@ trait LanguageTranslationController
             $site->nsetup = $setup;
             $site->save();
         }
-        
     }
 }
 ?>
