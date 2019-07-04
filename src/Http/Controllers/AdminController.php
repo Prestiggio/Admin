@@ -37,9 +37,13 @@ class AdminController extends Controller
     
     protected $me;
     
+    private $perpage = 10;
+    
     public function __construct() {
         $this->middleware('adminauth:admin')->except(['login']);
         $this->me = Auth::user();
+        if(app('centrale'))
+            $this->perpage = app('centrale')->perpage();
     }
     
     public function index($action=null, Request $request) {
@@ -226,7 +230,7 @@ class AdminController extends Controller
         else {
             $query->where("guard", "=", "manager");
         }
-        $users = $query->paginate(10);
+        $users = $query->paginate($this->perpage);
         $users->map(function($item){
             $item->append('nactivities');
             $item->append('thumb');
