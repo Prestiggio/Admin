@@ -15,7 +15,7 @@ trait HasJsonSetup
         $this->setup = json_encode($ar);
     }
     
-    public static function unescape($ar) {
+    public static function unescape(&$ar) {
         array_walk_recursive($ar, function(&$v, $k){
             if(!preg_match("/^0\d+/", $v))
                 $v = is_numeric($v)?doubleval($v):$v;

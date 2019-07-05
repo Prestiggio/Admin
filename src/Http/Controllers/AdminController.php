@@ -46,6 +46,81 @@ class AdminController extends Controller
             $this->perpage = app('centrale')->perpage();
     }
     
+    public function get_setup() {
+        $permission = Permission::authorize(__METHOD__);
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        return view("$this->theme.ldjson", [
+            "theme" => $this->theme,
+            "view" => "App.Manager.Setup",
+            "data" => $setup,
+            "page" => [
+                "title" => __("Setup"),
+                "href" => "/setup",
+                "icon" => "fa fa-gear",
+                "permission" => $permission
+            ]
+        ]);
+    }
+    
+    public function post_setup(Request $request) {
+        $ar = $request->all();
+        if(isset($ar['setup'])) {
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            foreach($ar['setup'] as $className => $topics) {
+                if(is_array($topics)) {
+                    foreach($topics as $k => $v) {
+                        if(is_string($k)) {
+                            $setup[$className][$k] = array_filter($ar['setup'][$className][$k], function($item){
+                                return $item['label']!='';
+                            });
+                        }
+                        else {
+                            $setup[$className] = $topics;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    $setup[$className] = $topics;
+                }
+            }
+            $site->nsetup = $setup;
+            $site->save();
+        }
+    }
+    
+    public function post_upload(Request $request) {
+        if($request->hasFile("logo")) {
+            $request->file('logo')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('logo')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['logo'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
+        if($request->hasFile("nophoto")) {
+            $request->file('nophoto')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('nophoto')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['nophoto'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
+        if($request->hasFile("favicon")) {
+            $request->file('favicon')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('favicon')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['favicon'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
+    }
+    
     public function index($action=null, Request $request) {
         Auth::user()->log($action);
         if(!$action)
