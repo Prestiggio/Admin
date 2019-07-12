@@ -36,7 +36,7 @@
     	<script type="application/json+ryAdminTools" id="adminfooter">{!!json_encode(['admin' => $admin, 'page' => $page])!!}</script>
     </nav>
     @if(env('APP_ENV')=='local')
-    <script type="text/javascript" src="{{env('APP_URL')}}:3000/admin.amelior.js"></script>
+    <script type="text/javascript" src="/scripts/{{$theme}}.amelior.js"></script>
     @else
     @include("scripts.admin")
     <script type="text/javascript" src="/ryadmin.amelior.js"></script>

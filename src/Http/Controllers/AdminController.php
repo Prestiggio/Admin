@@ -31,13 +31,94 @@ class AdminController extends Controller
 {
     use LanguageTranslationController;
     
+    protected $viewHint = "::";
+    
     protected $theme = "ryadmin";
     
     protected $me;
     
+    private $perpage = 10;
+    
     public function __construct() {
         $this->middleware('adminauth:admin')->except(['login']);
         $this->me = Auth::user();
+        if(app('centrale'))
+            $this->perpage = app('centrale')->perpage();
+    }
+    
+    public function get_setup() {
+        $permission = Permission::authorize(__METHOD__);
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        return view("$this->theme.ldjson", [
+            "theme" => $this->theme,
+            "view" => "App.Manager.Setup",
+            "data" => $setup,
+            "page" => [
+                "title" => __("Setup"),
+                "href" => "/setup",
+                "icon" => "fa fa-gear",
+                "permission" => $permission
+            ]
+        ]);
+    }
+    
+    public function post_setup(Request $request) {
+        $ar = $request->all();
+        if(isset($ar['setup'])) {
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            foreach($ar['setup'] as $className => $topics) {
+                if(is_array($topics)) {
+                    foreach($topics as $k => $v) {
+                        if(is_string($k)) {
+                            $setup[$className][$k] = array_filter($ar['setup'][$className][$k], function($item){
+                                return $item['label']!='';
+                            });
+                        }
+                        else {
+                            $setup[$className] = $topics;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    $setup[$className] = $topics;
+                }
+            }
+            $site->nsetup = $setup;
+            $site->save();
+        }
+    }
+    
+    public function post_upload(Request $request) {
+        if($request->hasFile("logo")) {
+            $request->file('logo')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('logo')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['logo'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
+        if($request->hasFile("nophoto")) {
+            $request->file('nophoto')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('nophoto')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['nophoto'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
+        if($request->hasFile("favicon")) {
+            $request->file('favicon')->store('setup', env('PUBLIC_DISK', 'public'));
+            $path = 'storage/setup/' . $request->file('favicon')->hashName();
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            $setup['favicon'] = $path;
+            $site->nsetup = $setup;
+            $site->save();
+        }
     }
     
     public function index($action=null, Request $request) {
@@ -60,7 +141,7 @@ class AdminController extends Controller
     }
     
     public function get_dashboard(Request $request) {
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
             "view" => "",
             "page" => [
@@ -71,7 +152,7 @@ class AdminController extends Controller
     }
     
     public function get_events() {
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Events',
             "data" => Event::all(),
@@ -84,7 +165,7 @@ class AdminController extends Controller
     
     public function get_event_models(Request $request) {
         $row = Event::find($request->get('event_id'))->append('nsetup');
-        return view("$this->theme::fragment", [
+        return view("$this->theme{$this->viewHint}fragment", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Model.Check',
             'data' => Model::all(),
@@ -170,7 +251,7 @@ class AdminController extends Controller
         $ar = $request->all();
         app("centrale")->setSite($ar['site_id']);
         $layouts = Layout::with(["sections", "roles.layoutOverrides"])->get();
-        return view("$this->theme::admin.dialogs.menus", [
+        return view("$this->theme{$this->viewHint}admin.dialogs.menus", [
             "navigationByRole" => [
                 "page" => $ar,
                 "layouts" => $layouts,
@@ -187,7 +268,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::fragment", [
+        return view("$this->theme{$this->viewHint}fragment", [
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/insert_user",
@@ -206,7 +287,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme::fragment", array_merge([
+        return view("$this->theme{$this->viewHint}fragment", array_merge([
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/update_user",
@@ -234,7 +315,7 @@ class AdminController extends Controller
         else {
             $query->where("guard", "=", "manager");
         }
-        $users = $query->paginate(10);
+        $users = $query->paginate($this->perpage);
         $users->map(function($item){
             $item->append('nactivities');
             $item->append('thumb');
@@ -243,7 +324,7 @@ class AdminController extends Controller
             'view' => 'list',
             'add_role' => $add_role
         ], $request->all());
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             "theme" => $this->theme,
             "view" => "Ry.Admin.User",
             "data" => array_merge($users->toArray(), $ar),
@@ -438,7 +519,7 @@ class AdminController extends Controller
             $item->append('nsetup');
             $item->makeHidden('setup');
         });
-        return view("$this->theme::ldjson", [
+        return view("$this->theme{$this->viewHint}ldjson", [
             'theme' => $this->theme,
             'view' => 'Ry.Profile.Editor',
             'action' => '/templates_insert',
@@ -527,7 +608,7 @@ class AdminController extends Controller
             ];
         }
         $data = $template->toArray();
-        return view("$this->theme::ldjson", array_merge([
+        return view("$this->theme{$this->viewHint}ldjson", array_merge([
             'theme' => $this->theme,
             "view" => "Ry.Profile.Editor",
             'action' => '/templates_update',
