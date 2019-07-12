@@ -129,9 +129,19 @@ class AdminController extends Controller
             if(isset($layout['sections'])) {
                 foreach ($layout['sections'] as $section) {
                     if(isset($section['updated'])) {
-                        $_section = LayoutSection::find($section['id']);
+                        if($section['id']>0) {
+                            $_section = LayoutSection::find($section['id']);
+                        }
+                        else {
+                            $_section = new LayoutSection();
+                            $_section->layout_id = $section['layout_id'];
+                            $_section->name = $section['name'];
+                            $_section->active = ($section['active']=='true');
+                        }
                         $_section->setup = $section["setup"];
                         $_section->save();
+                        
+                        app('centrale')->toSite($_section, $request->get('site_id'));
                     }
                 }
             }
