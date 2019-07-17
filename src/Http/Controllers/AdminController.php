@@ -433,8 +433,7 @@ class AdminController extends Controller
             'user' => $_user, 
             'password' => $password]]);
         
-        $_user->load("contacts");
-        $_user->load("medias");
+        $_user->load(["contacts", "medias"]);
         $_user->append('nactivities');
         $_user->append('thumb');
         
@@ -481,12 +480,12 @@ class AdminController extends Controller
                 'type' => 'image'
             ]);
         }
+         
+        app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
         
         $_user->load(["profile", "medias", "contacts", "roles"]);
         $_user->append('nactivities');
         $_user->append('thumb');
-        
-        app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
         
         return [
             "type" => "users",
