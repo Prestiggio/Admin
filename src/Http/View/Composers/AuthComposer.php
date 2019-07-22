@@ -16,6 +16,9 @@ class AuthComposer
     }
     
     public function compose(View $view) {
+        if(session()->has('message')) {
+            $view->with("message", session('message'));
+        }
         $view->with('user', $this->me);
         $data = $view->getData();
         if(isset($data['page'])) {
@@ -44,7 +47,7 @@ class AuthComposer
         if(isset($existingData['parents'])) {
             $breadcrumbs = array_merge($breadcrumbs, $existingData['parents']);
         }
-        if(isset($existingData['page']))
+        if(isset($existingData['page']['href']))
             $breadcrumbs[$existingData['page']['href']] = $existingData['page'];
         $view->with("breadcrumbs", [
             '@context' => 'https://schema.org',
