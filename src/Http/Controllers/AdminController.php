@@ -63,6 +63,10 @@ class AdminController extends Controller
         ]);
     }
     
+    public function get_hash(Request $request) {
+        return Hash::make($request->get('password'));
+    }
+    
     public function post_setup(Request $request) {
         $ar = $request->all();
         if(isset($ar['setup'])) {
