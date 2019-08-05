@@ -17,15 +17,14 @@ use Ry\Admin\Models\UserRole;
 use Ry\Admin\Models\Role;
 use Faker\Factory;
 use Illuminate\Support\Facades\Mail;
-use Ry\Admin\Mail\AccountCreated;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Mail\Preview;
 use Ry\Profile\Models\Contact;
 use Ry\Admin\Models\Language;
 use Ry\Medias\Models\Media;
-use Ry\Admin\Models\Event;
 use Illuminate\Filesystem\Filesystem;
 use Ry\Admin\Models\Model;
+use Ry\Admin\Models\Alert;
 
 class AdminController extends Controller
 {
@@ -159,53 +158,65 @@ class AdminController extends Controller
         return view("$this->theme{$this->viewHint}ldjson", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Events',
-            "data" => Event::all(),
+            "data" => Alert::all(),
             'page' => [
-                'title' => __('Gestion des évènements'),
+                'title' => __('Gestion des alertes'),
                 'href' => '/'.__('get_events')
             ]
         ]);
     }
     
+    public function get_event_add() {
+        return view("$this->theme{$this->viewHint}fragment", [
+            'theme' => $this->theme,
+            'view' => 'Ry.Admin.Alert.Form',
+            'page' => [
+                'title' => __('Gestion des alertes'),
+                'href' => '/'.__('get_event_add')
+            ]
+        ]);
+    }
+    
+    public function get_event_edit(Request $request) {
+        $row = Alert::find($request->get('id'));
+        return view("$this->theme{$this->viewHint}fragment", [
+            'theme' => $this->theme,
+            'view' => 'Ry.Admin.Alert.Form',
+            "row" => $row,
+            'page' => [
+                'title' => __('Gestion des alertes'),
+                'href' => '/'.__('get_event_add')
+            ]
+        ]);
+    }
+    
     public function get_event_models(Request $request) {
-        $row = Event::find($request->get('event_id'))->append('nsetup');
+        $row = Alert::find($request->get('event_id'))->append('nsetup');
         return view("$this->theme{$this->viewHint}fragment", [
             'theme' => $this->theme,
             'view' => 'Ry.Admin.Model.Check',
-            'data' => Model::all(),
             'row' => $row
         ]);
     }
     
-    public function post_event_models(Request $request) {
-        $ar = $request->all();
-        $ar = Model::unescape($ar);
-        $event = Event::find($request->get('event_id'));
-        $items = [];
-        foreach($ar['models'] as $model_id => $checked) {
-            if($checked)
-                $items[] = $model_id;
-        }
-        $event->nsetup = [
-            'models' => $items
-        ];
-        $event->save();
-        return $items;
-    }
-    
     public function post_events(Request $request) {
-        $event = Event::find($request->get('id'));
+        $event = Alert::find($request->get('id'));
         if(!$event) {
-            $event = new Event();
+            $event = new Alert();
         }
         $event->code = $request->get('code');
         $event->descriptif = $request->get('descriptif');
+        $event->nsetup = $request->get('nsetup');
         $event->save();
-        return $event;
+        $alerts = Alert::all();
+        return [
+            'type' => 'alerts',
+            'data' => $alerts
+        ];
     }
     
     public function delete_events(Request $request) {
-        Event::where('id', '=', $request->get('id'))->delete();
+        Alert::where('id', '=', $request->get('id'))->delete();
     }
     
     public function post_update_menus(Request $request) {
@@ -517,8 +528,8 @@ class AdminController extends Controller
                 'content' => Storage::disk("local")->get("mail-template.html")
             ];
         }
-        $events = Event::all();
-        $events->each(function($item){
+        $alerts = Alert::all();
+        $alerts->each(function($item){
             $item->append('nsetup');
             $item->makeHidden('setup');
         });
@@ -527,13 +538,19 @@ class AdminController extends Controller
             'view' => 'Ry.Profile.Editor',
             'action' => '/templates_insert',
             "contents" => array_values($contents),
-            "events" => Event::all(),
+            "all_alerts" => $alerts,
             "channels" => NotificationTemplate::CHANNELS,
             "presets" => [
                 [
                     "title" => __("e_mail"),
                     'href' => __('get_templates'),
                     'icon' => 'fa fa-users'
+                ]
+            ],
+            'parents' => [
+                [
+                    'href' => '/templates',
+                    "title" => __("e_mail"),
                 ]
             ],
             "page" => [
@@ -553,17 +570,6 @@ class AdminController extends Controller
         $template = new NotificationTemplate();
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
-        $arevents = [];
-        if(isset($ar['template']['events'])) {
-            $events = array_keys($ar['template']['events']);
-            foreach($events as $event) {
-                $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
-            }
-        }
-        $template->arevents = $arevents;
-        if(isset($ar['template']['injections'])) {
-            $template->arinjections = $ar['template']['injections'];
-        }
         $template->save();
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
@@ -588,7 +594,8 @@ class AdminController extends Controller
     }
     
     public function get_templates_edit(Request $request) {
-        $template = NotificationTemplate::find($request->get("id"));
+        $template = NotificationTemplate::with("alerts")->find($request->get("id"));
+        $template->makeHidden('channels');
         $contents = [];
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
@@ -611,18 +618,31 @@ class AdminController extends Controller
             ];
         }
         $data = $template->toArray();
+        $alert_ids = $template->alerts->pluck('id', null);
+        $alerts = Alert::all();
+        $alerts->each(function($item)use($alert_ids){
+            $item->append('nsetup');
+            $item->makeHidden('setup');
+            $item->setAttribute('selected', in_array($item->id, $alert_ids->toArray()));
+        });
         return view("$this->theme{$this->viewHint}ldjson", array_merge([
             'theme' => $this->theme,
             "view" => "Ry.Profile.Editor",
             'action' => '/templates_update',
             "contents" => array_values($contents),
-            "events" => array_keys(json_decode(Storage::disk("local")->get("events.log"), true)),
+            "all_alerts" => $alerts,
             "channels" => NotificationTemplate::CHANNELS,
             "presets" => [
                 [
                     "title" => __("e_mail"),
                     'href' => __('get_templates'),
                     'icon' => 'fa fa-users'
+                ]
+            ],
+            'parents' => [
+                [
+                    'href' => '/templates',
+                    "title" => __("e_mail"),
                 ]
             ],
             "page" => [
@@ -642,25 +662,17 @@ class AdminController extends Controller
         $template = NotificationTemplate::find($request->get("id"));
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
-        $arevents = [];
-        if(isset($ar['template']['events'])) {
-            $events = array_keys($ar['template']['events']);
-            foreach($events as $event) {
-                $arevents[$event] = isset($ar['template']['events'][$event]['immediate']);
+        $template->save();
+        if(isset($ar['alerts'])) {
+            foreach($ar['alerts'] as $alert_id => $alert) {
+                if($alert==0) {
+                    $template->alerts()->whereAlertId($alert_id)->delete();
+                }
+                elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
+                    $template->alerts()->attach($alert_id);
+                }
             }
         }
-        $template->arevents = $arevents;
-        if(isset($ar['template']['injections'])) {
-            if(!isset($ar['template']['injections']['log']))
-                $ar['template']['injections']['log'] = false;
-            $template->arinjections = $ar['template']['injections'];
-        }
-        else {
-            $template->arinjections = [
-                'log' => false
-            ];
-        }
-        $template->save();
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
             if($content['id']!="") {
@@ -698,9 +710,7 @@ class AdminController extends Controller
     
     public function post_test_email(Request $request) {
         $this->me = Auth::user();
-        Mail::to($this->me)->sendNow(new Preview($request->get('subject'), $request->get('content'), $request->get('signature'), [
-            "user" => $this->me
-        ]));
+        Mail::to($this->me)->sendNow(new Preview($request->get('subject'), $request->get('content'), $request->get('signature')));
     }
     
     public function get_logout() {

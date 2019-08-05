@@ -28,6 +28,7 @@ use Ry\Admin\Console\Commands\RegisterEvent;
 use Ry\Admin\RyAdmin;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Ry\Admin\Console\Commands\AdminModel;
+use Ry\Admin\Models\Alert;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -154,7 +155,12 @@ HERE;
         Event::listen("*", function(){
             $args = func_get_args();
             $d = $args;
-            //Storage::disk('local')->append("events.log", $d[0]."\n");
+            /*$event = Alert::where('code', '=', $d[0])->first();
+            if($event) {
+                $setup = $event->nsetup;
+                $setup['last_execution'] = Carbon::now();
+                $event->nsetup = $setup;
+            }*/
         });
         
         View::composer('*', AuthComposer::class);
@@ -167,22 +173,13 @@ HERE;
         
         Event::listen("ryadminnotify*", function($eventName, array $data){
             $site = app("centrale")->getSite();
-            
-            if(!Storage::disk("local")->exists("events.log")) {
-                $events = [];
-            }
-            else {
-                $events = json_decode(Storage::disk("local")->get("events.log"), true);
-            }
-            $events[$eventName] = [
-                "latest_execution" => Carbon::now()
-            ];
-            Storage::disk("local")->put("events.log", json_encode($events));
             if($site->nsetup['emailing'])
                 list($to) = $data;
             else
                 $to = env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
-            $templates = NotificationTemplate::where("events", "LIKE", '%'.$eventName.'%')
+            $templates = NotificationTemplate::whereHas("alerts", function($q)use($eventName){
+                $q->whereCode($eventName);
+            })
             ->where("channels", "LIKE", '%MailSender%')->get();
             foreach($templates as $template) {
                 Mail::to($to)->send(new EventCaught($template, $data));

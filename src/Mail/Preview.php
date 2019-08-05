@@ -26,10 +26,17 @@ class Preview extends Mailable
      */
     public function __construct($subject="Email test", $content="Email test", $signature="Undefined", $data=[])
     {
-        $this->subject = $subject;
-        $this->content = $content;
-        $this->signature = $signature;
-        $this->data = $data;
+        //$content = str_replace("</twig>", "}}", preg_replace("/\<twig macro=\"([^\"]+)\"\>[^\<]*/", '{{$1', $content));
+        $content = str_replace("</twig>", "", preg_replace("/\<twig macro=\"([^\"]+)\"\>[^\<]*/", '$1', $content));
+        $loader = new \Twig_Loader_Array([
+            'subject' => str_replace('{{', '', str_replace('}}', '', $subject)),
+            'signature' => str_replace('{{', '', str_replace('}}', '', $signature)),
+            'content' => $content
+        ]);
+        $twig = new \Twig_Environment($loader);
+        $this->subject = $twig->render("subject", $data);
+        $this->signature = $twig->render("signature", $data);
+        $this->content = $twig->render("content", $data);
     }
 
     /**
@@ -45,10 +52,6 @@ class Preview extends Mailable
         if(!$site->nsetup['emailing']) {
             $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
-        $loader = new \Twig_Loader_Array([
-            "email" => str_replace("</twig>", "}}", str_replace("<twig>", "{{", $this->content))
-        ]);
-        $twig = new \Twig_Environment($loader);
-        return $this->html($twig->render("email", $this->data));
+        return $this->html($this->content);
     }
 }

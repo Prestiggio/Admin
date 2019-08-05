@@ -5,6 +5,7 @@ namespace Ry\Admin\Console\Commands;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Ry\Admin\Models\Alert;
 
 class RegisterEvent extends Command
 {
@@ -13,14 +14,14 @@ class RegisterEvent extends Command
      *
      * @var string
      */
-    protected $signature = 'ryadmin:event {action} {name}';
+    protected $signature = 'ryadmin:alert {action} {name}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Generate a named event to inject in codes and list through events.log';
+    protected $description = 'Generate a named alert to inject in codes and list through alerts table';
 
     /**
      * Create a new command instance.
@@ -39,16 +40,14 @@ class RegisterEvent extends Command
      */
     public function handle()
     {
-        $eventName = $this->argument('name');
-        if(!Storage::disk("local")->exists("events.log")) {
-            $events = [];
-        }
-        else {
-            $events = json_decode(Storage::disk("local")->get("events.log"), true);
-        }
-        $events[$eventName] = [
-            "latest_execution" => Carbon::now()
+        $alertName = $this->argument('name');
+        $alert = new Alert();
+        $alert->code = $alertName;
+        $alert->descriptif = $this->ask('Décrivez le sens de cet évènement');
+        $alert->nsetup = [
+            'models' => [],
+            'last_execution' => null
         ];
-        Storage::disk("local")->put("events.log", json_encode($events));
+        $alert->save();
     }
 }
