@@ -45,7 +45,7 @@ class AdminController extends Controller
             $this->perpage = app('centrale')->perpage();
     }
     
-    public function get_setup() {
+    public function get_setup(Request $request) {
         $permission = Permission::authorize(__METHOD__);
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
@@ -64,34 +64,6 @@ class AdminController extends Controller
     
     public function get_hash(Request $request) {
         return Hash::make($request->get('password'));
-    }
-    
-    public function post_setup(Request $request) {
-        $ar = $request->all();
-        if(isset($ar['setup'])) {
-            $site = app("centrale")->getSite();
-            $setup = $site->nsetup;
-            foreach($ar['setup'] as $className => $topics) {
-                if(is_array($topics)) {
-                    foreach($topics as $k => $v) {
-                        if(is_string($k)) {
-                            $setup[$className][$k] = array_filter($ar['setup'][$className][$k], function($item){
-                                return $item['label']!='';
-                            });
-                        }
-                        else {
-                            $setup[$className] = $topics;
-                            break;
-                        }
-                    }
-                }
-                else {
-                    $setup[$className] = $topics;
-                }
-            }
-            $site->nsetup = $setup;
-            $site->save();
-        }
     }
     
     public function post_upload(Request $request) {
