@@ -176,7 +176,7 @@ HERE;
             if($site->nsetup['emailing'])
                 list($to) = $data;
             else
-                $to = env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
+                $to = isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
             $templates = NotificationTemplate::whereHas("alerts", function($q)use($eventName){
                 $q->whereCode($eventName);
             })

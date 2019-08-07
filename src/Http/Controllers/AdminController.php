@@ -682,7 +682,7 @@ class AdminController extends Controller
     
     public function post_test_email(Request $request) {
         $this->me = Auth::user();
-        Mail::to($this->me)->sendNow(new Preview($request->get('subject'), $request->get('content'), $request->get('signature')));
+        Mail::to($this->me)->sendNow(new Preview($request->get('subject'), $request->get('content'), $request->get('signature'), $request->all()));
     }
     
     public function get_logout() {

@@ -40,7 +40,7 @@ class UserInsertCaught extends Mailable
         $payload['contact_email'] = env('DEBUG_RECIPIENT_EMAIL');
         $site = app("centrale")->getSite();
         if(!$site->nsetup['emailing']) {
-            $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
+            $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         $loader = new ArrayLoader([
             "email" => file_get_contents(__DIR__.'/../assets/userinsert.twig')

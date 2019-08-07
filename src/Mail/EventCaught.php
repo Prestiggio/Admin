@@ -44,7 +44,7 @@ class EventCaught extends Mailable
         $this->content = $twig->render("content", $data);
         $this->to = $recipient_user;
         if(!$site->nsetup['emailing']) {
-            $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
+            $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         $this->from("no-reply@".env('APP_DOMAIN'), $twig->render("signature", $data));
     }

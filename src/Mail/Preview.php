@@ -12,6 +12,8 @@ use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\Support\Facades\Storage;
 use Auth;
 use Twig\Lexer;
+use Ry\Centrale\Models\Push;
+use App\User;
 
 class Preview extends Mailable
 {
@@ -33,6 +35,7 @@ class Preview extends Mailable
             'signature' => str_replace('{{', '', str_replace('}}', '', $signature)),
             'content' => $content
         ]);
+        $this->data = $data;
         $twig = new \Twig_Environment($loader);
         $this->subject = $twig->render("subject", $data);
         $this->signature = $twig->render("signature", $data);
@@ -50,8 +53,22 @@ class Preview extends Mailable
         $this->from("no-reply@".env('APP_DOMAIN'), $this->signature);
         $site = app("centrale")->getSite();
         if(!$site->nsetup['emailing']) {
-            $this->to = [['address' => env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
+            $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
-        return $this->html($this->content);
+        $data = $this->data;
+        $content = $this->content;
+        return $this->html($this->content)->withSwiftMessage(function(\Swift_Message $m)use($data,$content){
+            $cid = $m->getId();
+            $user = auth()->user();
+            $push = new Push();
+            $push->user_id = $user->id; //@todo change to recipient ID
+            $push->object_type = NotificationTemplate::class;
+            $push->object_id = isset($data['id'])?$data['id']:0;
+            $push->content = $content;
+            $push->confirm_reading = false;
+            $push->channel = 'email';
+            $push->cid = $cid;
+            $push->save();
+        });
     }
 }
