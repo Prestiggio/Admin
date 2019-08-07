@@ -23,7 +23,6 @@
     @if(env('APP_ENV')!='local')
     <link href="/style1.css" rel="stylesheet">
     <link href="/style0.css" rel="stylesheet">
-    <link href="/ryadmin.css" rel="stylesheet">
     @endif
 </head>
 <body class="full-screen">
