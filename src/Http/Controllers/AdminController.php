@@ -62,6 +62,19 @@ class AdminController extends Controller
         ]);
     }
     
+    public function post_setup(Request $request) {
+        $ar = $request->all();
+        if(isset($ar['setup'])) {
+            $site = app("centrale")->getSite();
+            $setup = $site->nsetup;
+            foreach($ar['setup'] as $k => $v) {
+                $setup[$k] = $v;
+            }
+            $site->nsetup = $setup;
+            $site->save();
+        }
+    }
+    
     public function get_hash(Request $request) {
         return Hash::make($request->get('password'));
     }
