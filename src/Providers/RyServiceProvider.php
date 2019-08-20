@@ -29,6 +29,8 @@ use Ry\Admin\RyAdmin;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Ry\Admin\Console\Commands\AdminModel;
 use Ry\Admin\Models\Alert;
+use Elasticsearch\Client;
+use Elasticsearch\ClientBuilder;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -46,10 +48,10 @@ class RyServiceProvider extends ServiceProvider
     	$this->mergeConfigFrom(
 	        	__DIR__.'/../config/ryadmin.php', 'ryadmin'
 	    );
+	    */
     	$this->publishes([
-    			__DIR__.'/../assets' => public_path('vendor/ryadmin'),
-    	], "public");    	
-    	*/
+    			__DIR__.'/../assets/public' => public_path('vendor/ryadmin'),
+    	], "public");
     	//ressources
     	$this->loadViewsFrom(__DIR__.'/../ressources/views', 'ryadmin');
     	$this->loadTranslationsFrom(__DIR__.'/../ressources/lang', 'ryadmin');
@@ -225,6 +227,9 @@ HERE;
     	    return new AdminModel();
     	});
     	$this->commands('ryadmin.models');
+    	$this->app->bind(Client::class, function(){
+    	    return ClientBuilder::create()->build();
+    	});
     }
     public function map()
     {    	

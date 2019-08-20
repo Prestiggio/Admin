@@ -503,6 +503,7 @@ class AdminController extends Controller
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
         $contents = [];
+        $fs = new Filesystem();
         foreach($setup[Language::class] as $language) {
             $contents[$language["code"]] = [
                 'lang' => $language["code"],
@@ -510,7 +511,7 @@ class AdminController extends Controller
                     "subject" => "",
                     "signature" => ""
                 ],
-                'content' => Storage::disk("local")->get("mail-template.html")
+                'content' => Storage::disk("local")->exists("mail-template.html") ? Storage::disk("local")->get("mail-template.html") : $fs->get(__DIR__ . '/../../assets/mail-template.html')
             ];
         }
         $alerts = Alert::all();
