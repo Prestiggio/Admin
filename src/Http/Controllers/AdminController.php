@@ -25,6 +25,7 @@ use Ry\Medias\Models\Media;
 use Illuminate\Filesystem\Filesystem;
 use Ry\Admin\Models\Model;
 use Ry\Admin\Models\Alert;
+use Ry\Profile\Models\Profile;
 
 class AdminController extends Controller
 {
@@ -400,16 +401,25 @@ class AdminController extends Controller
         $_user->password = Hash::make($password);
         $_user->save();
         
+        $setup = null;
+        if(isset($user['profile']['nsetup'])) {
+            $nsetup = $user['profile']['nsetup'];
+            Profile::unescape($nsetup);
+            $setup = json_encode($nsetup);
+        }
+        
         $_user->profile()->create([
             "gender" => $user['profile']["gender"],
             "firstname" => $user['profile']["firstname"],
             "lastname" => $user['profile']["lastname"],
             "official" => $user['profile']["firstname"]." ".$user['profile']["lastname"],
-            "languages" => "fr"
+            "languages" => "fr",
+            "setup" => $setup
         ]);
         
         foreach ($roles as $role) {
-            $_user->roles()->attach($role->id);
+            if(!$_user->roles()->whereRoleId($role->id)->exists())
+                $_user->roles()->attach($role->id);
         }
         
         $_user->load("roles");
@@ -457,6 +467,13 @@ class AdminController extends Controller
         $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
         $_user->save();
         
+        if(isset($ar['profile']['nsetup'])) {
+            $nsetup = $ar['profile']['nsetup'];
+            Profile::unescape($nsetup);
+            $setup = json_encode($nsetup);
+            $ar['profile']['setup'] = $setup;
+            unset($ar['profile']['nsetup']);
+        }
         $_user->profile()->update($ar['profile']);
         
         if($request->has("nophoto")) {

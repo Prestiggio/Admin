@@ -14,20 +14,22 @@ class ElasticsearchObserver
     }
     
     public function saved($model)
-    {
-        $this->elasticsearch->index([
-            'index' => $model->getSearchIndex(),
-            'type' => $model->getSearchType(),
-            'id' => $model->id,
-            'body' => $model->toSearchArray(),
-        ]);
+    {   
+        if($model->indexable()) {
+            $this->elasticsearch->index([
+                'index' => $model->getSearchIndex(),
+                'type' => '_doc',
+                'id' => $model->id,
+                'body' => $model->toSearchArray()
+            ]);
+        }
     }
     
     public function deleted($model)
     {
         $this->elasticsearch->delete([
             'index' => $model->getSearchIndex(),
-            'type' => $model->getSearchType(),
+            'type' => '_doc',
             'id' => $model->id,
         ]);
     }

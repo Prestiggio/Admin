@@ -36,5 +36,9 @@ trait Searchable
         // data that's going to be searchable per model.
         return $this->toArray();
     }
+    
+    public function indexable() {
+        return true;
+    }
 }
 ?>
