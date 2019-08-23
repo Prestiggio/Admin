@@ -39,6 +39,8 @@ class AdminController extends Controller
     
     private $perpage = 10;
     
+    protected $force_password = false;
+    
     public function __construct() {
         $this->middleware('adminauth:admin')->except(['login']);
         $this->me = Auth::user();
@@ -379,7 +381,9 @@ class AdminController extends Controller
         if(User::whereEmail($user['email'])->exists())
             abort(410, __("L'adresse email est déjà utilisé"));
         
-        if(env('APP_ENV')!='production') {
+        if($this->force_password && $request->has('password') && $request->get('password')!='')
+            $password = $request->get('password');
+        elseif(env('APP_ENV')!='production') {
             $password = 'admin12345';
         }
         else {
@@ -464,6 +468,9 @@ class AdminController extends Controller
         $ar = $request->all();
         $_user = User::find($ar['id']);
         $_user->email = $ar['email'];
+        if($this->force_password && isset($ar['password']) && $ar['password']!='') {
+            $_user->password = Hash::make($ar['password']);
+        }
         $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
         $_user->save();
         
