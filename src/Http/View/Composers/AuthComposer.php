@@ -13,11 +13,11 @@ class AuthComposer
     
     public function __construct() {
         $this->me = app("ryadmin")->fullUser();
-        if($this->me)
-            $this->me->load('unseenNotifications');
     }
     
     public function compose(View $view) {
+        if($this->me)
+            $this->me->loadMissing('unseenNotifications');
         if(session()->has('message')) {
             $view->with("message", session('message'));
         }
