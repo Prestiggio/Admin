@@ -65,6 +65,30 @@ class AdminController extends Controller
         ]);
     }
     
+    public function get_setup_tree() {
+        $permission = Permission::authorize(__METHOD__);
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        return view("$this->theme::ldjson", [
+            "theme" => $this->theme,
+            "view" => "Ry.Admin.SetupTree",
+            "data" => $setup,
+            "page" => [
+                "title" => __("Setup"),
+                "href" => "/setup",
+                "icon" => "fa fa-gear",
+                "permission" => $permission
+            ]
+        ]);
+    }
+    
+    public function post_setup_tree(Request $request) {
+        $ar = json_decode($request->get('setup'), true);
+        $site = app("centrale")->getSite();
+        $site->nsetup = $ar;
+        $site->save();
+    }
+    
     public function post_setup(Request $request) {
         $ar = $request->all();
         if(isset($ar['setup'])) {
