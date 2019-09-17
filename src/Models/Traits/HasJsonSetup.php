@@ -26,5 +26,12 @@ trait HasJsonSetup
         });
         return $ar;
     }
+    
+    public function getHidden()
+    {
+        if(!in_array("setup", $this->hidden))
+            return array_merge($this->hidden, ['setup']);
+        return $this->hidden;
+    }
 }
 ?>

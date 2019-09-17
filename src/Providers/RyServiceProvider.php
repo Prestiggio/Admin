@@ -227,9 +227,6 @@ HERE;
     	    return new AdminModel();
     	});
     	$this->commands('ryadmin.models');
-    	$this->app->bind(Client::class, function(){
-    	    return ClientBuilder::create()->build();
-    	});
     }
     public function map()
     {    	
