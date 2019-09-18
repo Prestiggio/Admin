@@ -18,6 +18,13 @@ trait AdministratorTrait
 	    return route($this->guard . '-logout');
 	}
 	
+	public function getHidden()
+	{
+	    if(!in_array("activities", $this->hidden))
+	        return array_merge($this->hidden, ['activities']);
+	    return $this->hidden;
+	}
+	
 	public function getNactivitiesAttribute() {
 	    if($this->activities)
 	        return json_decode($this->activities, true);

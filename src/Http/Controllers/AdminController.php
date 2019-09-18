@@ -26,6 +26,7 @@ use Illuminate\Filesystem\Filesystem;
 use Ry\Admin\Models\Model;
 use Ry\Admin\Models\Alert;
 use Ry\Profile\Models\Profile;
+use Ry\Geo\Http\Controllers\PublicController as GeoController;
 
 class AdminController extends Controller
 {
@@ -496,6 +497,9 @@ class AdminController extends Controller
             $_user->password = Hash::make($ar['password']);
         }
         $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
+        if(isset($ar['active'])) {
+            $_user->active = $ar['active'];
+        }
         $_user->save();
         
         if(isset($ar['profile']['nsetup'])) {
@@ -504,6 +508,10 @@ class AdminController extends Controller
             $setup = json_encode($nsetup);
             $ar['profile']['setup'] = $setup;
             unset($ar['profile']['nsetup']);
+        }
+        if(isset($ar['profile']['adresse'])) {
+            $ar['profile']['adresse_id'] = app(GeoController::class)->generate($ar['profile']['adresse'])->id;
+            unset($ar['profile']['adresse']);
         }
         $_user->profile()->update($ar['profile']);
         
