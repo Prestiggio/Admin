@@ -436,12 +436,17 @@ class AdminController extends Controller
             Profile::unescape($nsetup);
             $setup = json_encode($nsetup);
         }
+        if(isset($user['profile']['adresse'])) {
+            $user['profile']['adresse_id'] = app(GeoController::class)->generate($user['profile']['adresse'])->id;
+            unset($user['profile']['adresse']);
+        }
         
         $_user->profile()->create([
             "gender" => $user['profile']["gender"],
             "firstname" => $user['profile']["firstname"],
             "lastname" => $user['profile']["lastname"],
             "official" => $user['profile']["firstname"]." ".$user['profile']["lastname"],
+            "adresse_id" => isset($user['profile']['adresse_id']) ? $user['profile']['adresse_id'] : null,
             "languages" => "fr",
             "setup" => $setup
         ]);
