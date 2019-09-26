@@ -37,8 +37,39 @@ class AuthComposer
                 $sitemap = array_merge($sitemap, $section->setup);
                 $view->with($section->name, $section->setup);
             }
+            $view->with('menugroup', [
+                [
+                    "menu" => "menu",
+                    "title" => "Menu"
+                ]
+            ]);
+            $view->with('usercontextualmenu', [
+                [
+                    "title" => "Mon profil",
+                    "icon" => "icon-user",
+                    "href" => "#"
+                ],
+                /*[
+                 "title" => "Messages",
+                 "icon" => "icon-envelope-open",
+                 "href" => "#"
+                 ],*/
+                [
+                    "title" => "Paramètres",
+                    "icon" => "icon-settings",
+                    "href" => "#"
+                ],
+                [
+                    "title" => "separator"
+                ],
+                [
+                    "title" => "Déconnexion",
+                    "icon" => "icon-power",
+                    "href" => "/logout"
+                ]
+            ]);
         }
-        $breadcrumbs = [
+      	$breadcrumbs = [
             "home" => [
                 'title' => __('accueil'),
                 'href' => '/',
