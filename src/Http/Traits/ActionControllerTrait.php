@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Ry\Admin\Models\Language;
 use Ry\Admin\Models\LanguageTranslation;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 trait ActionControllerTrait
 {
@@ -48,7 +49,10 @@ trait ActionControllerTrait
             });
         }
         if($method_name!='' && method_exists($this, $method_name)) {
-            return $this->$method_name($request)->with("routes", $translated_routes);
+            $ret = $this->{$method_name}($request);
+            if($ret instanceof View)
+                return $ret->with("routes", $translated_routes);
+            return $ret;
         }
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
