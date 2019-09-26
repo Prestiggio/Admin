@@ -3,7 +3,9 @@ namespace Ry\Admin\Http\Traits;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Ry\Admin\Models\Language;
 use Ry\Admin\Models\LanguageTranslation;
+use Illuminate\Support\Facades\Cache;
 
 trait ActionControllerTrait
 {
@@ -16,12 +18,38 @@ trait ActionControllerTrait
         })->where("translation_string", "LIKE", $action)
         ->where("lang", "=", App::getLocale())
         ->first();
-        if($translation)
-            $action = $translation->slug->code;
-        else
-            $action = $method . '_' . $action;
-        if($action!='' && method_exists($this, $action))
-            return $this->$action($request);
+        $translated_routes = [];
+        if($translation) {
+            $method_name = $translation->slug->code;
+            $translation_id = $translation->id;
+            $translated_routes = Cache::rememberForever("transroutes." . $method_name, function()use($translation_id, $action){
+                $translated_routes = [];
+                $site = app("centrale")->getSite();
+                $trs = LanguageTranslation::whereTranslationId($translation_id)->get();
+                $ar = [];
+                foreach($trs as $tr) {
+                    $ar[$tr->lang] = $tr->translation_string;
+                }
+                foreach($site->nsetup[Language::class] as $language) {
+                    $translated_routes[$language['code']] = '/'.$language['code'].'/'.isset($ar[$language['code']])?$ar[$language['code']]:$action;
+                }
+                return $translated_routes;
+            });
+        }
+        else {
+            $method_name = $method . '_' . $action;
+            $translated_routes = Cache::rememberForever("transroutes." . $method_name, function()use($action){
+                $translated_routes = [];
+                $site = app("centrale")->getSite();
+                foreach($site->nsetup[Language::class] as $language) {
+                    $translated_routes[$language['code']] = '/'.$language['code'].'/'.$action;
+                }
+                return $translated_routes;
+            });
+        }
+        if($method_name!='' && method_exists($this, $method_name)) {
+            return $this->$method_name($request)->with("routes", $translated_routes);
+        }
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
 }
