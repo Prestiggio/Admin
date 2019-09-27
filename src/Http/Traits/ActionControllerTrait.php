@@ -32,7 +32,7 @@ trait ActionControllerTrait
                     $ar[$tr->lang] = $tr->translation_string;
                 }
                 foreach($site->nsetup[Language::class] as $language) {
-                    $translated_routes[$language['code']] = '/'.$language['code'].'/'.isset($ar[$language['code']])?$ar[$language['code']]:$action;
+                    $translated_routes[$language['code']] = '/'.$language['code'].'/'.(isset($ar[$language['code']])?$ar[$language['code']]:$action);
                 }
                 return $translated_routes;
             });
