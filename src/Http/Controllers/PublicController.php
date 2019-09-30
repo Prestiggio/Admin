@@ -38,4 +38,16 @@ class PublicController extends Controller
             return $this->$action($request);
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
+    
+    public function translation($lang) {
+        $languages = [];
+        $translations = LanguageTranslation::whereLang($lang)->with(["slug"])->get();
+        foreach($translations as $translation) {
+            $languages[$translation->slug->code] = $translation->translation_string;
+        }
+        return response()->view("ryadmin::languages", [
+            "lang" => $lang,
+            "translations" => json_encode($languages)
+        ])->header('Content-Type', 'text/javascript; charset=UTF-8');
+    }
 }
