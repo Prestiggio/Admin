@@ -35,11 +35,6 @@
     <nav class="navbar fixed-bottom navbar-dark bg-dark">
     	<script type="application/json+ryAdminTools" id="adminfooter">{!!json_encode(['admin' => $admin, 'page' => $page])!!}</script>
     </nav>
-    @if(env('APP_ENV')=='local')
-    <script type="text/javascript" src="/scripts/{{$theme}}.amelior.js"></script>
-    @else
-    @include("scripts.admin")
-    <script type="text/javascript" src="/ryadmin.amelior.js"></script>
-    @endif
+    @include("ryadmin::scripts")
 </body>
 @stop

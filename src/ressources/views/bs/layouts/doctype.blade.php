@@ -23,10 +23,7 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-	@if(env('APP_ENV')!='local')
-   	<link href="/style1.css" rel="stylesheet">
-    <link href="/style0.css" rel="stylesheet">
-    @endif
+	@include("ryadmin::styles")
 </head>
 @section("body")
 <body>
@@ -38,12 +35,7 @@
     <div>
     	<script type="application/json+ryCore"></script>
     </div>
-    @if(env('APP_ENV')=='local')
-    <script type="text/javascript" src="{{env('APP_URL')}}:3000/admin.amelior.js"></script>
-    @else
-    @include("scripts.admin")
-    <script type="text/javascript" src="/ryadmin.amelior.js"></script>
-    @endif
+    @include("ryadmin::scripts")
 </body>
 @show
 </html>
