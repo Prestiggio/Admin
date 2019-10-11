@@ -494,6 +494,87 @@ class AdminController extends Controller
         $_user->save();
     }
     
+    public function post_update_me(Request $request) {
+        $ar = $request->all();
+        $_user = auth()->user();
+        $_user->email = $ar['email'];
+        if($this->force_password && isset($ar['password']) && $ar['password']!='') {
+            $_user->password = Hash::make($ar['password']);
+        }
+        else{
+            if($ar['password']!='') {
+                if($ar['password']!=$ar['password_confirmation']) {
+                    return [
+                        'status' => 'error',
+                        'message' => __('Les mots de passe sont différents')
+                    ];
+                }
+                else {
+                    if(Hash::check($ar['password_old'], $_user->password)) {
+                        $_user->password = Hash::make($ar['password']);
+                    }
+                    else {
+                        return [
+                            'status' => 'error',
+                            'message' => __("L'ancien mot de passe n'est pas valide.")
+                        ];
+                    }
+                }
+            }
+        }
+        $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
+        if(isset($ar['active'])) {
+            $_user->active = $ar['active'];
+        }
+        $_user->save();
+        
+        if(isset($ar['profile']['nsetup'])) {
+            $nsetup = $ar['profile']['nsetup'];
+            Profile::unescape($nsetup);
+            $setup = json_encode($nsetup);
+            $ar['profile']['setup'] = $setup;
+            unset($ar['profile']['nsetup']);
+        }
+        if(isset($ar['profile']['adresse'])) {
+            $ar['profile']['adresse_id'] = app(GeoController::class)->generate($ar['profile']['adresse'])->id;
+            unset($ar['profile']['adresse']);
+        }
+        $_user->profile()->update($ar['profile']);
+        
+        if($request->has("nophoto")) {
+            foreach($_user->medias as $media) {
+                Storage::delete($media->path);
+            }
+            $_user->medias()->delete();
+        }
+        elseif($request->hasFile('photo')) {
+            foreach($_user->medias as $media) {
+                Storage::delete($media->path);
+            }
+            $_user->medias()->delete();
+            
+            $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
+            $path = 'avatars/'.$request->file('photo')->hashName();
+            $_user->medias()->create([
+                'owner_id' => $_user->id,
+                'title' => $path,
+                'path' => 'storage/'.$path,
+                'type' => 'image'
+            ]);
+        }
+        
+        app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
+        
+        $_user->load(["profile", "medias", "contacts", "roles"]);
+        $_user->append('nactivities');
+        $_user->append('thumb');
+        
+        return [
+            "type" => "users",
+            "row" => $_user
+        ];
+    }
+    
     public function post_update_user(Request $request) {
         $ar = $request->all();
         $_user = User::find($ar['id']);
