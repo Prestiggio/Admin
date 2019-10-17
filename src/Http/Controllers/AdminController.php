@@ -699,6 +699,16 @@ class AdminController extends Controller
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
         $template->save();
+        if(isset($ar['alerts'])) {
+            foreach($ar['alerts'] as $alert_id => $alert) {
+                if($alert==0) {
+                    $template->alerts()->whereAlertId($alert_id)->delete();
+                }
+                elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
+                    $template->alerts()->attach($alert_id);
+                }
+            }
+        }
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
             Storage::disk('local')->put($path, $content["content"]);
