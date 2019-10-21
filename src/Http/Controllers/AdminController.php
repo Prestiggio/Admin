@@ -142,17 +142,27 @@ class AdminController extends Controller
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
-        $translation = LanguageTranslation::whereHas('slug', function($q)use($method){
+        $query = LanguageTranslation::whereHas('slug', function($q)use($method){
             $q->where("code", "LIKE", $method.'_%');
-        })->where("translation_string", "LIKE", $action)
-            ->where("lang", "=", App::getLocale())
-            ->first();
-        if($translation)
-            $action = $translation->slug->code;
-        else
-            $action = $method . '_' . $action;
-        if($action!='' && method_exists($this, $action))
-            return $this->$action($request);
+        })->where("translation_string", "LIKE", $action);
+        $translations = $query->get();
+        foreach($translations as $translation) {
+            $controller_action = $translation->slug->code;
+            if($controller_action!='' && $translation->lang == App::getLocale() && method_exists($this, $controller_action))
+                return $this->$controller_action($request);
+        }
+        foreach($translations as $translation) {
+            if($translation->lang != 'fr')
+                continue;
+            
+            $controller_action = $translation->slug->code;
+            if($controller_action!='' && method_exists($this, $controller_action))
+                return $this->$controller_action($request);
+        }
+        $controller_action = $method . '_' . $action;
+        if(method_exists($this, $controller_action)) {
+            return $this->$controller_action($request);
+        }
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
     

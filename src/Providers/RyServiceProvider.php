@@ -31,6 +31,7 @@ use Ry\Admin\Console\Commands\AdminModel;
 use Ry\Admin\Models\Alert;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
+use Ry\Admin\Http\Middleware\LangMiddleware;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -187,6 +188,10 @@ HERE;
                 Mail::to($to)->send(new EventCaught($template, $data));
             }
         });
+        
+        $middlewareGroups = $this->app->router->getMiddlewareGroups();
+        $middlewareGroups['web'][] = LangMiddleware::class;
+        $this->app->router->middlewareGroup('web', $middlewareGroups['web']);
     }
 
     /**
@@ -196,6 +201,9 @@ HERE;
      */
     public function register()
     {
+        /*$this->app->singleton("rylang", function(){
+            return new LangMiddleware();
+        });*/
         $this->app->singleton("ryadmin", function(){
             return new RyAdmin();
         });
