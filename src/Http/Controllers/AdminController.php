@@ -712,7 +712,7 @@ class AdminController extends Controller
         if(isset($ar['alerts'])) {
             foreach($ar['alerts'] as $alert_id => $alert) {
                 if($alert==0) {
-                    $template->alerts()->whereAlertId($alert_id)->delete();
+                    $template->alerts()->detach($alert_id);
                 }
                 elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
                     $template->alerts()->attach($alert_id);
@@ -814,7 +814,7 @@ class AdminController extends Controller
         if(isset($ar['alerts'])) {
             foreach($ar['alerts'] as $alert_id => $alert) {
                 if($alert==0) {
-                    $template->alerts()->whereAlertId($alert_id)->delete();
+                    $template->alerts()->detach($alert_id);
                 }
                 elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
                     $template->alerts()->attach($alert_id);

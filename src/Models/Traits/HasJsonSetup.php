@@ -17,8 +17,6 @@ trait HasJsonSetup
     
     public static function unescape(&$ar) {
         array_walk_recursive($ar, function(&$v, $k){
-            if(!preg_match("/^0\d+/", $v))
-                $v = is_numeric($v)?doubleval($v):$v;
             if($v==='false')
                 $v = false;
             if($v==='true')
