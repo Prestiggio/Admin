@@ -9,6 +9,7 @@ use App, Auth;
 use Ry\Admin\Models\Language;
 use Ry\Admin\Models\Translation;
 use Ry\Admin\Models\Traits\HasJsonSetup;
+use Illuminate\Support\Facades\Storage;
 
 trait LanguageTranslationController
 {
@@ -123,22 +124,22 @@ trait LanguageTranslationController
         $presets = [App::getLocale()];
         $me = Auth::user();
         $k = App::getLocale();
-        if(!isset($ar['lang'][App::getLocale()])) {
+        if(!isset($ar['lang'][config('app.fallback_locale')])) {
             $lg0 = '';
             foreach($ar['lang'] as $k => $v) {
                 $lg0 = $v;
                 if($v!='')
                     break;
             }
-            $ar['lang'][App::getLocale()] = $lg0;
+            $ar['lang'][config('app.fallback_locale')] = $lg0;
         }
-        if($ar['lang'][App::getLocale()]=='')
+        if($ar['lang'][config('app.fallback_locale')]=='')
             abort(404, __("aucune_traduction_na_ete_soumise"));
-        if(LanguageTranslation::where("translation_string", "LIKE", $ar['lang'][App::getLocale()])->exists())
+        if(Translation::where("code", "LIKE", $ar['lang'][config('app.fallback_locale')])->exists())
             return abort(409, __("cette_traduction_existe_deja"));
         
         $translation = Translation::create([
-            'code' => str_slug($ar['lang'][App::getLocale()], '_', $k)
+            'code' => $ar['lang'][config('app.fallback_locale')]
         ]);
         $meanings = [];
         foreach($ar['lang'] as $k => $v) {
@@ -169,7 +170,7 @@ trait LanguageTranslationController
     
     public function putTranslationById($translation_id, $translation_string, $lang=null) {
         if(!$lang)
-            $lang = App::getLocale();
+            $lang = config('app.fallback_locale');
         $translation = Translation::find($translation_id);
         $translation->meanings()->updateOrCreate([
             'lang' => $lang
@@ -181,7 +182,7 @@ trait LanguageTranslationController
     
     public function putTranslation($slug, $translation_string, $lang=null) {
         if(!$lang)
-            $lang = App::getLocale();
+            $lang = config('app.fallback_locale');
         $translation = Translation::firstOrCreate([
             'code' => $slug
         ]);
@@ -195,11 +196,11 @@ trait LanguageTranslationController
     
     public function postTranslation($translation_string, $lang=null) {
         if(!$lang)
-            $lang = App::getLocale();
+            $lang = config('app.fallback_locale');
         $exists = LanguageTranslation::where("translation_string", "LIKE", $translation_string)->whereLang($lang)->first();
         if($exists)
             return $exists->slug;
-        $slug = str_slug($translation_string, '_', $lang);
+        $slug = $translation_string;
         $translation = Translation::firstOrCreate(['code' => $slug]);
         $translation->meanings()->updateOrCreate([
             'lang' => $lang
@@ -239,6 +240,15 @@ trait LanguageTranslationController
             $site->nsetup = $setup;
             $site->save();
         }
+    }
+    
+    public function get_gettext() {
+        $contents = [];
+        $translations = Translation::all();
+        foreach($translations as $translation) {
+            $contents[] = '__("'.$translation->code.'")';
+        }
+        Storage::disk('local')->put('translations.php', "<?php\n" . implode(";\n",$contents) . "\n?>");
     }
 }
 ?>

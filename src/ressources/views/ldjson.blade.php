@@ -26,10 +26,7 @@ foreach($__vars as $k => $v) {
 <meta name="msapplication-TileColor" content="#da532c">
 <meta name="theme-color" content="#ffffff">
 <script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
-@if(env('APP_ENV')!='local')
-<link href="/style1.css" rel="stylesheet">
-<link href="/style0.css" rel="stylesheet">
-@endif
+@include("ryadmin::styles")
 </head>
 <body class="theme-cyan">
 	<div id="app">
@@ -37,11 +34,6 @@ foreach($__vars as $k => $v) {
             {!!json_encode($__ar)!!}
         </script>
 	</div>
-	@if(env('APP_ENV')=='local')
-	<script type="text/javascript" src="/scripts/{{$theme}}.amelior.js"></script>
-	@else
-	@include("scripts.admin")
-	<script type="text/javascript" src="/ryadmin.amelior.js"></script>
-	@endif
+	@include("ryadmin::scripts")
 </body>
 </html>

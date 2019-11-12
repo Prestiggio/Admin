@@ -142,17 +142,27 @@ class AdminController extends Controller
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
-        $translation = LanguageTranslation::whereHas('slug', function($q)use($method){
+        $query = LanguageTranslation::whereHas('slug', function($q)use($method){
             $q->where("code", "LIKE", $method.'_%');
-        })->where("translation_string", "LIKE", $action)
-            ->where("lang", "=", App::getLocale())
-            ->first();
-        if($translation)
-            $action = $translation->slug->code;
-        else
-            $action = $method . '_' . $action;
-        if($action!='' && method_exists($this, $action))
-            return $this->$action($request);
+        })->where("translation_string", "LIKE", $action);
+        $translations = $query->get();
+        foreach($translations as $translation) {
+            $controller_action = $translation->slug->code;
+            if($controller_action!='' && $translation->lang == App::getLocale() && method_exists($this, $controller_action))
+                return $this->$controller_action($request);
+        }
+        foreach($translations as $translation) {
+            if($translation->lang != 'fr')
+                continue;
+            
+            $controller_action = $translation->slug->code;
+            if($controller_action!='' && method_exists($this, $controller_action))
+                return $this->$controller_action($request);
+        }
+        $controller_action = $method . '_' . $action;
+        if(method_exists($this, $controller_action)) {
+            return $this->$controller_action($request);
+        }
         return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
     }
     
@@ -494,6 +504,87 @@ class AdminController extends Controller
         $_user->save();
     }
     
+    public function post_update_me(Request $request) {
+        $ar = $request->all();
+        $_user = auth()->user();
+        $_user->email = $ar['email'];
+        if($this->force_password && isset($ar['password']) && $ar['password']!='') {
+            $_user->password = Hash::make($ar['password']);
+        }
+        else{
+            if($ar['password']!='') {
+                if($ar['password']!=$ar['password_confirmation']) {
+                    return [
+                        'status' => 'error',
+                        'message' => __('Les mots de passe sont différents')
+                    ];
+                }
+                else {
+                    if(Hash::check($ar['password_old'], $_user->password)) {
+                        $_user->password = Hash::make($ar['password']);
+                    }
+                    else {
+                        return [
+                            'status' => 'error',
+                            'message' => __("L'ancien mot de passe n'est pas valide.")
+                        ];
+                    }
+                }
+            }
+        }
+        $_user->name = $ar['profile']['firstname'] . ' ' . $ar['profile']['lastname'];
+        if(isset($ar['active'])) {
+            $_user->active = $ar['active'];
+        }
+        $_user->save();
+        
+        if(isset($ar['profile']['nsetup'])) {
+            $nsetup = $ar['profile']['nsetup'];
+            Profile::unescape($nsetup);
+            $setup = json_encode($nsetup);
+            $ar['profile']['setup'] = $setup;
+            unset($ar['profile']['nsetup']);
+        }
+        if(isset($ar['profile']['adresse'])) {
+            $ar['profile']['adresse_id'] = app(GeoController::class)->generate($ar['profile']['adresse'])->id;
+            unset($ar['profile']['adresse']);
+        }
+        $_user->profile()->update($ar['profile']);
+        
+        if($request->has("nophoto")) {
+            foreach($_user->medias as $media) {
+                Storage::delete($media->path);
+            }
+            $_user->medias()->delete();
+        }
+        elseif($request->hasFile('photo')) {
+            foreach($_user->medias as $media) {
+                Storage::delete($media->path);
+            }
+            $_user->medias()->delete();
+            
+            $request->file('photo')->store("avatars", env('PUBLIC_DISK', 'public'));
+            $path = 'avatars/'.$request->file('photo')->hashName();
+            $_user->medias()->create([
+                'owner_id' => $_user->id,
+                'title' => $path,
+                'path' => 'storage/'.$path,
+                'type' => 'image'
+            ]);
+        }
+        
+        app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $ar['contacts']);
+        
+        $_user->load(["profile", "medias", "contacts", "roles"]);
+        $_user->append('nactivities');
+        $_user->append('thumb');
+        
+        return [
+            "type" => "users",
+            "row" => $_user
+        ];
+    }
+    
     public function post_update_user(Request $request) {
         $ar = $request->all();
         $_user = User::find($ar['id']);
@@ -618,6 +709,16 @@ class AdminController extends Controller
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
         $template->save();
+        if(isset($ar['alerts'])) {
+            foreach($ar['alerts'] as $alert_id => $alert) {
+                if($alert==0) {
+                    $template->alerts()->detach($alert_id);
+                }
+                elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
+                    $template->alerts()->attach($alert_id);
+                }
+            }
+        }
         foreach($ar['contents'] as $content) {
             $path = "notification_templates/" . $template->id . "-".$content["lang"].".html";
             Storage::disk('local')->put($path, $content["content"]);
@@ -713,7 +814,7 @@ class AdminController extends Controller
         if(isset($ar['alerts'])) {
             foreach($ar['alerts'] as $alert_id => $alert) {
                 if($alert==0) {
-                    $template->alerts()->whereAlertId($alert_id)->delete();
+                    $template->alerts()->detach($alert_id);
                 }
                 elseif(!$template->alerts()->whereAlertId($alert_id)->exists()) {
                     $template->alerts()->attach($alert_id);

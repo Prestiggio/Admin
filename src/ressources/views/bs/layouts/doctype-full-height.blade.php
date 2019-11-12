@@ -20,10 +20,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
-    @if(env('APP_ENV')!='local')
-    <link href="/style1.css" rel="stylesheet">
-    <link href="/style0.css" rel="stylesheet">
-    @endif
+    @include("ryadmin::styles")
 </head>
 <body class="full-screen">
     <div id="app" class="my-auto">
@@ -31,11 +28,6 @@
             @yield('content')
         </main>
     </div>
-    @if(env('APP_ENV')=='local')
-    <script type="text/javascript" src="{{env('APP_URL')}}:3000/ryadmin.amelior.js"></script>
-    @else
-    @include("scripts.admin")
-    <script type="text/javascript" src="/ryadmin.amelior.js"></script>
-    @endif
+    @include("ryadmin::scripts")
 </body>
 </html>
