@@ -184,8 +184,13 @@ HERE;
                 $q->whereCode($eventName);
             })
             ->where("channels", "LIKE", '%MailSender%')->get();
-            foreach($templates as $template) {
-                Mail::to($to)->send(new EventCaught($template, $data));
+            if($templates->count()>0) {
+                foreach($templates as $template) {
+                    Mail::to($to)->send(new EventCaught($template, $data));
+                }
+            }
+            elseif($eventName=='ryadminnotify_insert_user') {
+                Mail::to($to)->send(new UserInsertCaught($data));
             }
         });
         
