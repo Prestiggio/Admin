@@ -526,7 +526,8 @@ class AdminController extends Controller
                     else {
                         return [
                             'status' => 'error',
-                            'message' => __("L'ancien mot de passe n'est pas valide.")
+                            'message' => __("L'ancien mot de passe n'est pas valide."),
+                            'type' => 'users'
                         ];
                     }
                 }
