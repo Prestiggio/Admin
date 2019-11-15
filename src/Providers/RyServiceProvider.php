@@ -261,6 +261,48 @@ HERE;
                 }
                 if($timelines->count()>0)
                     Model::reguard();
+                
+                $timelines = Timeline::where('delete_at', '<=', Carbon::now()->toDateTimeString())
+                    ->whereNull('action')->get();
+                foreach($timelines as $timeline) {
+                    if($timeline->serializable_id>0) {
+                        $reversion = $timeline->reversion;
+                        while($reversion && $reversion->delete_at<=Carbon::now()) {
+                            $reversion = $reversion->reversion;
+                        }
+                        if($reversion && $reversion->delete_at>Carbon::now()) {
+                            $row = $timeline->serializable;
+                            $setup = $reversion->nsetup;
+                            if($reversion->serializable_id>0) {
+                                unset($setup['created_at']);
+                                unset($setup['updated_at']);
+                                $row->update($setup);
+                                $row->save();
+                                $action = 'updated';
+                            }
+                            else {
+                                $row->fill($setup);
+                                $row->save();
+                                $reversion->serializable_id = $row->id;
+                                $action = 'created';
+                            }
+                            $reversion->active = true;
+                            $reversion->action = $action;
+                            $reversion->save();
+                        }
+                        else {
+                            $timeline->serializable->delete();
+                            $timeline->active = false;
+                            $timeline->action = 'deleted';
+                            $timeline->save();
+                        }
+                    }
+                    else {
+                        //just delete if it's not linked to any record
+                        $timeline->delete();
+                    }
+                }
+                
             })->everyMinute();
         });
     }

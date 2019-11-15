@@ -120,7 +120,7 @@ trait Deferable
         $timeline->save_at = $start;
         $timeline->delete_at = $end;
         $timeline->active = false;
-        if(($start->isPast() || $start->isSameAs('Y-m-d', Carbon::now())) && $end->isFuture()) {
+        if(($start->isPast() || $start->isSameAs('Y-m-d', Carbon::now())) && ($end->isFuture() || $end->isSameAs('Y-m-d', Carbon::now()))) {
             if($this->id) {
                 //get active date
                 $active_timeline = Timeline::whereSerializableType(get_class($this))->whereSerializableId($this->id)->whereActive(1)->first();
@@ -157,6 +157,9 @@ trait Deferable
                 //save the model immediately
                 $this->save();
             }
+        }
+        else {
+            $this->save();
         }
         $timeline->serializable_id = $this->id;
         $timeline->nsetup = $this->toArray();

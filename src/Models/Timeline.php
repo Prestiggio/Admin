@@ -20,4 +20,8 @@ class Timeline extends Model
     public function serializable() {
         return $this->morphTo();
     }
+    
+    public function reversion() {
+        return $this->belongsTo(Timeline::class, 'revert_id');
+    }
 }
