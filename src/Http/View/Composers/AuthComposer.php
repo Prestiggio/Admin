@@ -71,7 +71,7 @@ class AuthComposer
         }
       	$breadcrumbs = [
             "home" => [
-                'title' => __('accueil'),
+                'title' => __('Accueil'),
                 'href' => '/',
                 'icon' => 'fa fa-home'
             ]

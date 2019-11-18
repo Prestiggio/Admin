@@ -37,6 +37,7 @@ use Ry\Admin\Models\Timeline;
 use \ReflectionClass;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use Ry\Admin\Console\Commands\Gettext;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -348,6 +349,11 @@ HERE;
     	    return new AdminModel();
     	});
     	$this->commands('ryadmin.models');
+    	
+    	$this->app->singleton('ryadmin.gettext', function($app){
+            return new Gettext(); 
+    	});
+    	$this->commands('ryadmin.gettext');
     }
     public function map()
     {    	

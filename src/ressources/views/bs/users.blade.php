@@ -2,8 +2,8 @@
 
 @section("content")
 <ul class="breadcrumbs-alt">
-	<li><a href="/">@lang("accueil")</a></li>
-	<li><a href="/">@lang("gestion_generale")</a></li>
+	<li><a href="/">@lang("Accueil")</a></li>
+	<li><a href="/">@lang("Gestion générale")</a></li>
 	<li><a class="current">{{$page['title']}}</a></li>
 </ul>
 <div class="row">
