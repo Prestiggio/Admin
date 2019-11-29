@@ -55,6 +55,10 @@ class Preview extends Mailable
         if(!$site->nsetup['emailing']) {
             $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
+        else {
+            $user = auth()->user();
+            $this->to = [['address' => $user->email, 'name' => $user->name]];
+        }
         $data = $this->data;
         $content = $this->content;
         return $this->html($this->content)->withSwiftMessage(function(\Swift_Message $m)use($data,$content){

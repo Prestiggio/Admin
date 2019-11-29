@@ -14,9 +14,13 @@ trait ActionControllerTrait
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
+        $controller_action = $method . '_' . $action;
+        if(method_exists($this, $controller_action)) {
+            return $this->$controller_action($request);
+        }
         $translation = LanguageTranslation::whereHas('slug', function($q)use($method){
-            $q->where("code", "LIKE", $method.'_%');
-        })->where("translation_string", "LIKE", $action)
+            $q->where("code", "LIKE", "/%");
+        })->where("translation_string", "LIKE", '/'.$action.'%')
         ->where("lang", "=", App::getLocale())
         ->first();
         $translated_routes = [];
@@ -54,7 +58,7 @@ trait ActionControllerTrait
                 return $ret->with("routes", $translated_routes);
             return $ret;
         }
-        return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
+        abort(404);
     }
 }
 ?>
