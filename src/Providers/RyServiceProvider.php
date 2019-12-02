@@ -220,6 +220,8 @@ HERE;
                             'active' => false
                         ]);
                         $row = $timeline->serializable;
+                        if(!$row)
+                            $timeline->delete();
                     }
                     else {
                         Timeline::where('serializable_type', '=', $timeline->serializable_type)
@@ -230,7 +232,7 @@ HERE;
                         ]);
                         $serialized = new ReflectionClass($timeline->serializable_type);
                         $row = $serialized->newInstance();
-                    }
+                    }  
                     $setup = $timeline->nsetup;
                     if(isset($setup['nsetup'])) {
                         $row->nsetup = $setup['nsetup'];
