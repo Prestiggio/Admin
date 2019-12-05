@@ -142,28 +142,24 @@ class AdminController extends Controller
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
-        $query = LanguageTranslation::whereHas('slug', function($q)use($method){
-            $q->where("code", "LIKE", $method.'_%');
-        })->where("translation_string", "LIKE", $action);
-        $translations = $query->get();
-        foreach($translations as $translation) {
-            $controller_action = $translation->slug->code;
-            if($controller_action!='' && $translation->lang == App::getLocale() && method_exists($this, $controller_action))
-                return $this->$controller_action($request);
-        }
-        foreach($translations as $translation) {
-            if($translation->lang != 'fr')
-                continue;
-            
-            $controller_action = $translation->slug->code;
-            if($controller_action!='' && method_exists($this, $controller_action))
-                return $this->$controller_action($request);
-        }
         $controller_action = $method . '_' . $action;
         if(method_exists($this, $controller_action)) {
             return $this->$controller_action($request);
         }
-        return ["ty zao io action io euuuh" => $action, 'za' => auth('admin')->user(), 'goto' => url('/logout')];
+        else {
+            $query = LanguageTranslation::where('translation_string', 'LIKE', '/'.$action.'%')->whereHas('slug', function($q){
+                $q->where("code", "LIKE", "/%");
+            });
+            if($query->exists()) {
+                $translations = $query->get();
+                foreach($translations as $translation) {
+                    $controller_action = $method . '_' . preg_replace('/^\//', '', $translation->slug->code);
+                    if(method_exists($this, $controller_action))
+                        return $this->$controller_action($request);
+                }
+            }
+        }
+        abort(404);
     }
     
     public function get_dashboard(Request $request) {
@@ -184,7 +180,7 @@ class AdminController extends Controller
             "data" => Alert::all(),
             'page' => [
                 'title' => __('Gestion des alertes'),
-                'href' => '/'.__('get_events')
+                'href' => __('/events')
             ]
         ]);
     }
@@ -195,7 +191,7 @@ class AdminController extends Controller
             'view' => 'Ry.Admin.Alert.Form',
             'page' => [
                 'title' => __('Gestion des alertes'),
-                'href' => '/'.__('get_event_add')
+                'href' => __('/event_add')
             ]
         ]);
     }
@@ -208,7 +204,7 @@ class AdminController extends Controller
             "row" => $row,
             'page' => [
                 'title' => __('Gestion des alertes'),
-                'href' => '/'.__('get_event_add')
+                'href' => __('/event_add')
             ]
         ]);
     }
@@ -310,7 +306,7 @@ class AdminController extends Controller
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/insert_user",
-            "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+            "add_role" => $roles->count()==1 ? __("Ajouter") . ' ' . __($roles->first()->name) : __("Ajouter un utilisateur"),
             "select_roles" => $roles->get()
         ]);
     }
@@ -329,7 +325,7 @@ class AdminController extends Controller
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/update_user",
-            "add_role" => $roles->count()==1 ? __("ajouter") . ' ' . __($roles->first()->name) : __("ajouter_un_utilisateur"),
+            "add_role" => $roles->count()==1 ? __("Ajouter") . ' ' . __($roles->first()->name) : __("Ajouter un utilisateur"),
             "select_roles" => $roles->get()
         ], $row->toArray()));
     }
@@ -337,14 +333,14 @@ class AdminController extends Controller
     public function get_users(Request $request) {
         $permission = Permission::authorize(__METHOD__);
         $query = User::with(["profile", "medias", "contacts", "roles"]);
-        $add_role = __("ajouter_un_utilisateur");
+        $add_role = __("Ajouter un utilisateur");
         if($request->has("roles")) {
             $query->whereHas("roles", function($q) use ($request){
                 $q->whereIn("ry_admin_roles.id", $request->get("roles"));
             });
             $_roles = Role::whereIn("id", $request->get("roles"));
             if($_roles->count()==1) {
-                $add_role = __("ajouter") . ' ' . __($_roles->first()->name);
+                $add_role = __("Ajouter") . ' ' . __($_roles->first()->name);
             }
         }
         elseif($request->has('guard')) {
@@ -367,8 +363,8 @@ class AdminController extends Controller
             "view" => "Ry.Admin.User",
             "data" => array_merge($users->toArray(), $ar),
             "page" => [
-                "title" => __("liste_des_utilisateurs"),
-                "href" => "/users",
+                "title" => __("Liste des utilisateurs"),
+                "href" => __("/users"),
                 "permission" => $permission,
                 "icon" => "fa fa-users"
             ]
@@ -526,7 +522,8 @@ class AdminController extends Controller
                     else {
                         return [
                             'status' => 'error',
-                            'message' => __("L'ancien mot de passe n'est pas valide.")
+                            'message' => __("L'ancien mot de passe n'est pas valide."),
+                            'type' => 'users'
                         ];
                     }
                 }
@@ -680,21 +677,21 @@ class AdminController extends Controller
             "channels" => NotificationTemplate::CHANNELS,
             "presets" => [
                 [
-                    "title" => __("e_mail"),
-                    'href' => __('get_templates'),
+                    "title" => __("E-mail"),
+                    'href' => __('/templates'),
                     'icon' => 'fa fa-users'
                 ]
             ],
             'parents' => [
                 [
                     'href' => '/templates',
-                    "title" => __("e_mail"),
+                    "title" => __("E-mail"),
                 ]
             ],
             "page" => [
-                "title" => __("ajouter_une_template"),
+                "title" => __("Ajouter une template"),
                 "icon" => "fa fa-file-invoice",
-                "href" => '/'.__('get_templates_add')
+                "href" => __('/templates_add')
             ],
             "ckeditor" => [
                 "modules" => ["ry"]
@@ -782,20 +779,20 @@ class AdminController extends Controller
             "channels" => NotificationTemplate::CHANNELS,
             "presets" => [
                 [
-                    "title" => __("e_mail"),
-                    'href' => __('get_templates'),
+                    "title" => __("E-mail"),
+                    'href' => __('/templates'),
                     'icon' => 'fa fa-users'
                 ]
             ],
             'parents' => [
                 [
-                    'href' => '/templates',
-                    "title" => __("e_mail"),
+                    'href' => __('/templates'),
+                    "title" => __("E-mail"),
                 ]
             ],
             "page" => [
-                "title" => __("editer_la_template").' : '.$template->name,
-                'href' => '/'. __('get_templates_edit').'?id='.$template->id,
+                "title" => __("Editer la template").' : '.$template->name,
+                'href' => __('/templates_edit').'?id='.$template->id,
                 "icon" => "fa fa-file-invoice"
             ],
             "ckeditor" => [

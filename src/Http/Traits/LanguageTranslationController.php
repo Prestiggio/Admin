@@ -10,6 +10,7 @@ use Ry\Admin\Models\Language;
 use Ry\Admin\Models\Translation;
 use Ry\Admin\Models\Traits\HasJsonSetup;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Filesystem\Filesystem;
 
 trait LanguageTranslationController
 {
@@ -51,7 +52,7 @@ trait LanguageTranslationController
             "data" => $rows,
             "languages" => $languages,
             "page" => [
-                "title" => ucfirst(__("traductions")),
+                "title" => ucfirst(__("Traductions")),
                 "href" => '/'.request()->path(),
                 "icon" => "fa fa-globe-africa",
                 "permission" => $permission,
@@ -134,9 +135,9 @@ trait LanguageTranslationController
             $ar['lang'][config('app.fallback_locale')] = $lg0;
         }
         if($ar['lang'][config('app.fallback_locale')]=='')
-            abort(404, __("aucune_traduction_na_ete_soumise"));
+            abort(404, __("Aucune traduction n'a été soumise"));
         if(Translation::where("code", "LIKE", $ar['lang'][config('app.fallback_locale')])->exists())
-            return abort(409, __("cette_traduction_existe_deja"));
+            return abort(409, __("Cette traduction existe déja"));
         
         $translation = Translation::create([
             'code' => $ar['lang'][config('app.fallback_locale')]
@@ -222,7 +223,7 @@ trait LanguageTranslationController
                 "languages" => $languages
             ],
             "page" => [
-                "title" => ucfirst(__("languages")),
+                "title" => ucfirst(__("Langues")),
                 "href" => '/'.request()->path(),
                 "icon" => "fa fa-globe-africa",
                 "permission" => $permission,
@@ -249,6 +250,31 @@ trait LanguageTranslationController
             $contents[] = '__("'.$translation->code.'")';
         }
         Storage::disk('local')->put('translations.php', "<?php\n" . implode(";\n",$contents) . "\n?>");
+    }
+    
+    public function pojson() {
+        $fs = new Filesystem();
+        $files = $fs->glob(base_path("*-gettext.json"));
+        foreach($files as $file) {
+            preg_match("/(\w+)-gettext\.json$/", $file, $match);
+            $lang = $match[1];
+            $raw = $fs->get($file);
+            $ar = json_decode($raw, true);
+            foreach($ar as $code => $v) {
+                if($code == '')
+                    continue;
+                list($null, $translation) = $v;
+                if($translation=='')
+                    continue;
+                $_translation = Translation::firstOrCreate(['code' => $code]);
+                $_translation->meanings()->updateOrCreate([
+                    'lang' => $lang
+                ], [
+                    'translation_string' => $translation
+                ]);
+            }
+        }
+        LanguageTranslation::export();
     }
 }
 ?>

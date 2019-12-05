@@ -26,12 +26,18 @@ use Ry\Admin\Mail\UserInsertCaught;
 use Ry\Profile\Models\NotificationTemplate;
 use Ry\Admin\Console\Commands\RegisterEvent;
 use Ry\Admin\RyAdmin;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Ry\Admin\Console\Commands\AdminModel;
 use Ry\Admin\Models\Alert;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Ry\Admin\Http\Middleware\LangMiddleware;
+use Ry\Admin\Models\Timeline;
+use \ReflectionClass;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+use Ry\Admin\Console\Commands\Gettext;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -197,6 +203,111 @@ HERE;
         $middlewareGroups = $this->app->router->getMiddlewareGroups();
         $middlewareGroups['web'][] = LangMiddleware::class;
         $this->app->router->middlewareGroup('web', $middlewareGroups['web']);
+        
+        $this->app->booted(function(){
+            $schedule = $this->app->make(Schedule::class);
+            $schedule->call(function(){
+                $timelines = Timeline::where('save_at', '<=', Carbon::now()->toDateTimeString())
+                ->whereNull('action')->get();
+                if($timelines->count()>0)
+                    Model::unguard();
+                foreach($timelines as $timeline) {
+                    if($timeline->serializable_id>0) {
+                        Timeline::where('serializable_type', '=', $timeline->serializable_type)
+                        ->where('serializable_id', '=', $timeline->serializable_id)
+                        ->where('active', '=', true)
+                        ->update([
+                            'active' => false
+                        ]);
+                        $row = $timeline->serializable;
+                        if(!$row)
+                            $timeline->delete();
+                    }
+                    else {
+                        Timeline::where('serializable_type', '=', $timeline->serializable_type)
+                        ->whereNull('serializable_id')
+                        ->where('active', '=', true)
+                        ->update([
+                            'active' => false
+                        ]);
+                        $serialized = new ReflectionClass($timeline->serializable_type);
+                        $row = $serialized->newInstance();
+                    }  
+                    $setup = $timeline->nsetup;
+                    if(isset($setup['nsetup'])) {
+                        $row->nsetup = $setup['nsetup'];
+                        unset($setup['nsetup']);
+                    }
+                    foreach($setup as $k=>$v) {
+                        if(is_array($v)) {
+                            unset($setup[$k]);
+                        }
+                    }
+                    unset($setup['id']);
+                    //Log::info('minuteur ' . print_r($setup, true));
+                    if($timeline->serializable_id>0) {
+                        unset($setup['created_at']);
+                        unset($setup['updated_at']);
+                        $row->update($setup);
+                        $row->save();
+                        $action = 'updated';
+                    }
+                    else {
+                        $row->fill($setup);
+                        $row->save();
+                        $timeline->serializable_id = $row->id;
+                        $action = 'created';
+                    }
+                    $timeline->active = true;
+                    $timeline->action = $action;
+                    $timeline->save();
+                }
+                if($timelines->count()>0)
+                    Model::reguard();
+                
+                $timelines = Timeline::where('delete_at', '<=', Carbon::now()->toDateTimeString())
+                    ->whereNull('action')->get();
+                foreach($timelines as $timeline) {
+                    if($timeline->serializable_id>0) {
+                        $reversion = $timeline->reversion;
+                        while($reversion && $reversion->delete_at<=Carbon::now()) {
+                            $reversion = $reversion->reversion;
+                        }
+                        if($reversion && $reversion->delete_at>Carbon::now()) {
+                            $row = $timeline->serializable;
+                            $setup = $reversion->nsetup;
+                            if($reversion->serializable_id>0) {
+                                unset($setup['created_at']);
+                                unset($setup['updated_at']);
+                                $row->update($setup);
+                                $row->save();
+                                $action = 'updated';
+                            }
+                            else {
+                                $row->fill($setup);
+                                $row->save();
+                                $reversion->serializable_id = $row->id;
+                                $action = 'created';
+                            }
+                            $reversion->active = true;
+                            $reversion->action = $action;
+                            $reversion->save();
+                        }
+                        else {
+                            $timeline->serializable->delete();
+                            $timeline->active = false;
+                            $timeline->action = 'deleted';
+                            $timeline->save();
+                        }
+                    }
+                    else {
+                        //just delete if it's not linked to any record
+                        $timeline->delete();
+                    }
+                }
+                
+            })->everyMinute();
+        });
     }
 
     /**
@@ -240,6 +351,11 @@ HERE;
     	    return new AdminModel();
     	});
     	$this->commands('ryadmin.models');
+    	
+    	$this->app->singleton('ryadmin.gettext', function($app){
+            return new Gettext(); 
+    	});
+    	$this->commands('ryadmin.gettext');
     }
     public function map()
     {    	
