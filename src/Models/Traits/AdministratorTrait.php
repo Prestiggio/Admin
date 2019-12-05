@@ -3,6 +3,7 @@ namespace Ry\Admin\Models\Traits;
 
 use Carbon\Carbon;
 use Ry\Admin\Models\Role;
+use Ry\Profile\Models\Notification;
 
 trait AdministratorTrait
 {
@@ -42,5 +43,13 @@ trait AdministratorTrait
         $activities[] = $activity;
         $this->activities = json_encode($activities);
         $this->save();
+	}
+	
+	public function rynotifications() {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+    
+    public function unseenNotifications() {
+        return $this->rynotifications()->unseen();
     }
 }
