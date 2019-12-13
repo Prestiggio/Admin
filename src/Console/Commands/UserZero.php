@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use App\User;
 use Auth;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class UserZero extends Command {
 
@@ -40,14 +41,14 @@ class UserZero extends Command {
 	 */
 	public function handle()
 	{
-		$use_trait = array_has(class_uses(User::class), "Ry\Admin\Models\Traits\AdministratorTrait");
+		$use_trait = Arr::has(class_uses(User::class), "Ry\Admin\Models\Traits\AdministratorTrait");
 		
 		while(!$use_trait) {
 			if(!$this->confirm("Ampio trait Ry\Admin\Models\Traits\AdministratorTrait aloha le user e")) {
 				$this->warn("Tsy afaka asina role zany ny user an");
 				break;
 			}
-			$use_trait = array_has(class_uses(User::class), "Ry\Admin\Models\Traits\AdministratorTrait");
+			$use_trait = Arr::has(class_uses(User::class), "Ry\Admin\Models\Traits\AdministratorTrait");
 			if(!$use_trait) {
 				$this->error("Mbol ts hita ian");
 			}
@@ -81,9 +82,7 @@ class UserZero extends Command {
 		    "guard" => $credentials['guard'],
 		    "active" => true
 		]);
-		$user->roles()->updateOrCreate([
-					"name" => "admin"
-	    ]);
+		$user->roles()->attach(1);
 		
 		return $this->info("Vous etes passe au role d'administrateur - Merci :)");
 	}
