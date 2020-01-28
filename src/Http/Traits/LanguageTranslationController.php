@@ -21,7 +21,7 @@ trait LanguageTranslationController
         if($request->has("s") && $request->get('s')!='') {
             $translation_query = Translation::whereHas('meanings', function($q)use($request){
                 $q->where('translation_string', 'LIKE', '%'.$request->get('s').'%');
-            })->orderBy('code');
+            })->orWhere('code', 'LIKE', '%'.$request->get('s').'%')->orderBy('code');
         }
         else {
             $translation_query = Translation::orderBy('code');
