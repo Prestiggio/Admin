@@ -286,6 +286,7 @@ class AdminController extends Controller
         app("centrale")->setSite($ar['site_id']);
         $layouts = Layout::with(["sections", "roles.layoutOverrides"])->get();
         return view("$this->theme{$this->viewHint}admin.dialogs.menus", [
+            "site_id" => $request->get('site_id'),
             "navigationByRole" => [
                 "page" => $ar,
                 "layouts" => $layouts,
