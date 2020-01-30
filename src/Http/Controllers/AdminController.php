@@ -240,6 +240,8 @@ class AdminController extends Controller
     
     public function post_update_menus(Request $request) {
         $ar = $request->all();
+        if($request->has('site_id'))
+            app('centrale')->setSite($request->get('site_id'));
         foreach($ar["layouts"] as $layout) {
             if(isset($layout['sections'])) {
                 foreach ($layout['sections'] as $section) {
