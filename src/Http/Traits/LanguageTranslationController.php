@@ -276,5 +276,27 @@ trait LanguageTranslationController
         }
         LanguageTranslation::export();
     }
+    
+    public function translationFromJson($lang) {
+        $fs = new Filesystem();
+        $raw = $fs->get(resource_path('lang/'.$lang.'.json'));
+        $ar = json_decode($raw, true);
+        foreach($ar as $code => $translation_string) {
+            $translation = Translation::whereCode($code)->first();
+            if(!$translation) {
+                $translation = new Translation();
+                $translation->code = $code;
+                $translation->save();
+            }
+            $str = LanguageTranslation::whereTranslationId($translation->id)->whereLang($lang)->first();
+            if(!$str) {
+                $str = new LanguageTranslation();
+                $str->translation_id = $translation->id;
+                $str->lang = $lang;
+            }
+            $str->translation_string = $translation_string;
+            $str->save();
+        }
+    }
 }
 ?>
