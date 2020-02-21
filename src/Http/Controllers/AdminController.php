@@ -503,6 +503,31 @@ class AdminController extends Controller
         $_user->save();
     }
     
+    public function post_update_password(Request $request) {
+        $ar = $request->all();
+        $_user = auth()->user();
+        if($ar['password']!=$ar['password_confirmation']) {
+            return (object)[
+                'status' => 'error',
+                'message' => __('Les mots de passe sont différents')
+            ];
+        }
+        else {
+            if(Hash::check($ar['password_old'], $_user->password)) {
+                $_user->password = Hash::make($ar['password']);
+            }
+            else {
+                return (object)[
+                    'status' => 'error',
+                    'message' => __("L'ancien mot de passe n'est pas valide."),
+                    'type' => 'users'
+                ];
+            }
+        }
+        $_user->save();
+        return $_user;
+    }
+    
     public function post_update_me(Request $request) {
         $ar = $request->all();
         $_user = auth()->user();
