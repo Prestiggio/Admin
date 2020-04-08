@@ -13,6 +13,7 @@ class Pretention extends Model
     protected $dates = ['expire_at'];
     
     public static function generate($user_id, $pretended_id) {
+        static::where('expire_at', '<', Carbon::yesterday())->delete();
         $pretention = static::whereUserId($user_id)->wherePretendedId($pretended_id)->where('expire_at', '>', Carbon::now())->first();
         if(!$pretention) {
             $pretention = new self();

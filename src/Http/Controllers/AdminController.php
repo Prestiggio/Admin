@@ -32,10 +32,6 @@ class AdminController extends Controller
 {
     use LanguageTranslationController;
     
-    protected $viewHint = "::";
-    
-    protected $theme = "ryadmin";
-    
     protected $me;
     
     private $perpage = 10;
@@ -53,8 +49,7 @@ class AdminController extends Controller
         $permission = Permission::authorize(__METHOD__);
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
-        return view("$this->theme.ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "App.Manager.Setup",
             "data" => $setup,
             "page" => [
@@ -70,8 +65,7 @@ class AdminController extends Controller
         $permission = Permission::authorize(__METHOD__);
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
-        return view("$this->theme::ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "Ry.Admin.SetupTree",
             "data" => $setup,
             "page" => [
@@ -163,8 +157,7 @@ class AdminController extends Controller
     }
     
     public function get_dashboard(Request $request) {
-        return view("$this->theme{$this->viewHint}ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "",
             "page" => [
                 "title" => __("Tableau de bord"),
@@ -174,8 +167,7 @@ class AdminController extends Controller
     }
     
     public function get_events() {
-        return view("$this->theme{$this->viewHint}ldjson", [
-            'theme' => $this->theme,
+        return view("ldjson", [
             'view' => 'Ry.Admin.Events',
             "data" => Alert::all(),
             'page' => [
@@ -186,8 +178,7 @@ class AdminController extends Controller
     }
     
     public function get_event_add() {
-        return view("$this->theme{$this->viewHint}fragment", [
-            'theme' => $this->theme,
+        return view("fragment", [
             'view' => 'Ry.Admin.Alert.Form',
             'page' => [
                 'title' => __('Gestion des alertes'),
@@ -198,8 +189,7 @@ class AdminController extends Controller
     
     public function get_event_edit(Request $request) {
         $row = Alert::find($request->get('id'));
-        return view("$this->theme{$this->viewHint}fragment", [
-            'theme' => $this->theme,
+        return view("fragment", [
             'view' => 'Ry.Admin.Alert.Form',
             "row" => $row,
             'page' => [
@@ -211,8 +201,7 @@ class AdminController extends Controller
     
     public function get_event_models(Request $request) {
         $row = Alert::find($request->get('event_id'))->append('nsetup');
-        return view("$this->theme{$this->viewHint}fragment", [
-            'theme' => $this->theme,
+        return view("fragment", [
             'view' => 'Ry.Admin.Model.Check',
             'row' => $row
         ]);
@@ -287,7 +276,7 @@ class AdminController extends Controller
         $ar = $request->all();
         app("centrale")->setSite($ar['site_id']);
         $layouts = Layout::with(["sections", "roles.layoutOverrides"])->get();
-        return view("$this->theme{$this->viewHint}admin.dialogs.menus", [
+        return view("ryadmin::dialogs.menus", [
             "site_id" => $request->get('site_id'),
             "navigationByRole" => [
                 "page" => $ar,
@@ -305,7 +294,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme{$this->viewHint}fragment", [
+        return view("fragment", [
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/insert_user",
@@ -324,7 +313,7 @@ class AdminController extends Controller
         else {
             $roles = Role::with(["permissions"]);
         }
-        return view("$this->theme{$this->viewHint}fragment", array_merge([
+        return view("fragment", array_merge([
             "view" => "Ry.Admin.User",
             "subview" => "form",
             "action" => "/update_user",
@@ -361,8 +350,7 @@ class AdminController extends Controller
             'view' => 'list',
             'add_role' => $add_role
         ], $request->all());
-        return view("$this->theme{$this->viewHint}ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "Ry.Admin.User",
             "data" => array_merge($users->toArray(), $ar),
             "page" => [
@@ -696,8 +684,7 @@ class AdminController extends Controller
             $item->append('nsetup');
             $item->makeHidden('setup');
         });
-        return view("$this->theme{$this->viewHint}ldjson", [
-            'theme' => $this->theme,
+        return view("ldjson", [
             'view' => 'Ry.Profile.Editor',
             'action' => '/templates_insert',
             "contents" => array_values($contents),
@@ -798,8 +785,7 @@ class AdminController extends Controller
             $item->makeHidden('setup');
             $item->setAttribute('selected', in_array($item->id, $alert_ids->toArray()));
         });
-        return view("$this->theme{$this->viewHint}ldjson", array_merge([
-            'theme' => $this->theme,
+        return view("ldjson", array_merge([
             "view" => "Ry.Profile.Editor",
             'action' => '/templates_update',
             "contents" => array_values($contents),

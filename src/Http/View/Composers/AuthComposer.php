@@ -6,6 +6,7 @@ use Illuminate\View\View;
 use Auth;
 use Ry\Admin\Models\Layout\Layout;
 use Ry\Admin\Models\Layout\LayoutSection;
+use Ry\Admin\Models\Pretention;
 
 class AuthComposer
 {
@@ -16,8 +17,14 @@ class AuthComposer
     }
     
     public function compose(View $view) {
-        if($this->me)
+        if($this->me) {
             $this->me->loadMissing('unseenNotifications');
+            $pretenders = Pretention::with('user')->wherePretendedId($this->me->id)->whereUsed(true)->get();
+            //$this->me->setAttribute('pretenders', $pretenders);
+            if($pretenders->count()>0) {
+                //$this->me->setAttribute('editor_mode', true);
+            }
+        }
         if(session()->has('message')) {
             $view->with("message", session('message'));
         }

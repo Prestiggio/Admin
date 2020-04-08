@@ -46,8 +46,7 @@ trait LanguageTranslationController
             }
         }
         $permission = Permission::authorize(__METHOD__);
-        return view("$this->theme{$this->viewHint}ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "Ry.Admin.Translator",
             "data" => $rows,
             "languages" => $languages,
@@ -97,8 +96,7 @@ trait LanguageTranslationController
                 ];
             }
         }
-        return view("$this->theme{$this->viewHint}fragment", [
-            "theme" => $this->theme,
+        return view("fragment", [
             "view" => "Ry.Admin.Traductions",
             "presets" => $presets, 
             "locale" => App::getLocale()
@@ -216,8 +214,7 @@ trait LanguageTranslationController
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
         $languages = isset($setup[Language::class]) ? $setup[Language::class] : [];
-        return view("$this->theme{$this->viewHint}ldjson", [
-            "theme" => $this->theme,
+        return view("ldjson", [
             "view" => "Ry.Admin.Languages",
             "data" => [
                 "languages" => $languages
