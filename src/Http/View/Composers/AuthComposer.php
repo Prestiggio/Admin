@@ -22,7 +22,7 @@ class AuthComposer
             $pretenders = Pretention::with('user')->wherePretendedId($this->me->id)->whereUsed(true)->get();
             //$this->me->setAttribute('pretenders', $pretenders);
             if($pretenders->count()>0) {
-                //$this->me->setAttribute('editor_mode', true);
+                $this->me->setAttribute('editor_mode', true);
             }
         }
         if(session()->has('message')) {
