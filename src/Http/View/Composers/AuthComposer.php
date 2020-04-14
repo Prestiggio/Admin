@@ -24,11 +24,11 @@ class AuthComposer
             if($pretenders->count()>0) {
                 $this->me->setAttribute('editor_mode', true);
             }
+            $view->with('user', $this->me);
         }
         if(session()->has('message')) {
             $view->with("message", session('message'));
         }
-        $view->with('user', $this->me);
         $data = $view->getData();
         if(isset($data['page'])) {
             
