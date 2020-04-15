@@ -119,6 +119,15 @@ class RyServiceProvider extends ServiceProvider
     	    });
     	}
     	
+    	Blade::directive("seoblocks", function(){
+    	    return <<<HERE
+            <?php
+            \$seo_locale = Illuminate\Support\Facades\App::getLocale();
+            \$seo_controller = 
+            ?>
+HERE;
+    	});
+    	
     	Blade::directive("d", function($expression){
     	    $ar = explode(":", $expression, 2);
     	    if(count($ar)==1) {
