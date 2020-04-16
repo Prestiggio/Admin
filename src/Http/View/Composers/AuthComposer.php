@@ -1,12 +1,11 @@
 <?php 
 namespace Ry\Admin\Http\View\Composers;
 
-use App\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\View\View;
 use Auth;
-use Ry\Admin\Models\Layout\Layout;
-use Ry\Admin\Models\Layout\LayoutSection;
-use Ry\Admin\Models\Pretention;
+use Ry\Admin\Models\Seo\CustomLayout;
 
 class AuthComposer
 {
@@ -19,11 +18,7 @@ class AuthComposer
     public function compose(View $view) {
         if($this->me) {
             $this->me->loadMissing('unseenNotifications');
-            $pretenders = Pretention::with('user')->wherePretendedId($this->me->id)->whereUsed(true)->get();
-            //$this->me->setAttribute('pretenders', $pretenders);
-            if($pretenders->count()>0) {
-                $this->me->setAttribute('editor_mode', true);
-            }
+            $this->me->loadMissing('contacts');
             $view->with('user', $this->me);
         }
         if(session()->has('message')) {
@@ -31,7 +26,30 @@ class AuthComposer
         }
         $data = $view->getData();
         if(isset($data['page'])) {
-            
+            $page = $data['page'];
+            $locale = App::getLocale();
+            $fallback_locale = config('app.fallback_locale');
+            $customizations = [];
+            $blocks = CustomLayout::fetchBlocks();
+            foreach($blocks as $block) {
+                if($block->inline_content!='' && $locale!=$fallback_locale && $block->lang==$fallback_locale) {
+                    $customizations[$block->name] = $block->inline_content;
+                }
+            }
+            foreach($blocks as $block) {
+                if($block->inline_content!='' && $block->lang==$locale) {
+                    $customizations[$block->name] = $block->inline_content;
+                }
+            }
+            foreach($customizations as $block_name => $content) {
+                $page['full_title'] = true;
+                $loader = new \Twig_Loader_Array([
+                    'content' => $content
+                ]);
+                $twig = new \Twig_Environment($loader);
+                $page[$block_name] = $twig->render("content", $data);
+            }
+            $view->with('page', $page);
         }
         $sitemap = [];
         if($this->me) {
