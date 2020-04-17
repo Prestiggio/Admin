@@ -26,8 +26,23 @@ class CustomLayout extends Model
     public static function fetchBlocks() {
         if(!static::$block_cached) {
             static::$block_cached = true;
-            static::$cached_blocks = new Collection();
             $request = app(Request::class);
+            $site = app("centrale")->getSite();
+            $guard = 'admin';
+            if($site && $site->nsetup['subdomains']) {
+                foreach($site->nsetup['subdomains'] as $guard => $subdomain) {
+                    if($subdomain==$request->getHost()) {
+                        break;
+                    }
+                }
+            }
+            $wildcard_custom_layout = CustomLayout::whereRoute($guard)->first();
+            $blocks = [];
+            if($wildcard_custom_layout) {
+                foreach($wildcard_custom_layout->blocks as $block) {
+                    $blocks[$block->name] = $block;
+                }
+            }
             $query_custom_layout = static::whereRoute($request->route()->action['controller']);
             $action = $request->route('action', false);
             if($action)
@@ -37,8 +52,11 @@ class CustomLayout extends Model
                 $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->page', $page);
             $custom_layout = $query_custom_layout->first();
             if($custom_layout) {
-                static::$cached_blocks = $custom_layout->blocks;
+                foreach ($custom_layout->blocks as $block) {
+                    $blocks[$block->name] = $block;
+                }
             }
+            static::$cached_blocks = new Collection(array_values($blocks));
         }
         return static::$cached_blocks;
     }
