@@ -39,11 +39,21 @@ trait ArchivableTrait
         }
     }
     
-    public function toArray() {
-        if($this->archived) {
-            return $this->archived;
+    protected function isArchived() {
+        if(!$this->archived && Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->exists()) {
+            $archive = Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->first();
+            $this->archived = $archive->nsetup;
+            $this->archived['archived'] = true;
         }
-        return parent::toArray();
+        return $this->archived;
+    }
+    
+    public function toArray() {
+        $ar = parent::toArray();
+        if($this->isArchived()) {
+            return array_replace_recursive($ar, $this->archived);
+        }
+        return $ar;
     }
     
     public function unarchive() {
