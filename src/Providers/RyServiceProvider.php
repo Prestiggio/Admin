@@ -3,6 +3,7 @@
 namespace Ry\Admin\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -117,6 +118,14 @@ class RyServiceProvider extends ServiceProvider
     	        });
     	    });
     	}
+    	
+    	Blade::directive("seoblocks", function(){
+    	    return <<<HERE
+            <?php
+            \Ry\Admin\Models\Seo\CustomLayout::includes();
+            ?>
+HERE;
+    	});
     	
     	Blade::directive("d", function($expression){
     	    $ar = explode(":", $expression, 2);

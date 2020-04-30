@@ -18,6 +18,7 @@ class CreatePretentionsTable extends Migration
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('pretended_id');
             $table->string('token');
+            $table->boolean('used')->default(false);
             $table->timestamp('expire_at')->nullable();
             $table->timestamps();
         });

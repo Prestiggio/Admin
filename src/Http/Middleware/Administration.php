@@ -7,11 +7,6 @@ class Administration extends Middleware
 
     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
-            if(!preg_match('/^admin\./i', $request->getHost()))
-                return '/admin/login';
-        }
-        
         $user = auth('admin')->user();
         
         if(!$user)

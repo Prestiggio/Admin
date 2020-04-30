@@ -4,6 +4,7 @@ namespace Ry\Admin\Http\Middleware;
 
 use Closure;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\View;
 
 class LangMiddleware
 {
@@ -23,6 +24,8 @@ class LangMiddleware
         }
         
         App::setLocale($request->session()->get('lang', App::getLocale()));
+        
+        View::share("lang", App::getLocale());
         
         return $next($request);
     }
