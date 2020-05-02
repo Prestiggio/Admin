@@ -29,7 +29,7 @@ class CustomLayout extends Model
             $request = app(Request::class);
             $site = app("centrale")->getSite();
             $guard = 'admin';
-            if($site && $site->nsetup['subdomains']) {
+            if($site && isset($site->nsetup['subdomains']) && $site->nsetup['subdomains']) {
                 foreach($site->nsetup['subdomains'] as $guard => $subdomain) {
                     if($subdomain==$request->getHost()) {
                         break;
