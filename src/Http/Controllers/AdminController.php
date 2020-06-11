@@ -494,6 +494,7 @@ class AdminController extends Controller
     public function post_update_password(Request $request) {
         $ar = $request->all();
         $_user = auth()->user();
+        $_user->refresh();
         if($ar['password']!=$ar['password_confirmation']) {
             return (object)[
                 'status' => 'error',
