@@ -154,7 +154,7 @@ HERE;
     	});
     	
 	    Event::listen("composing:*", function($name, $views){
-	        if(isset($_GET["json"])) {
+	        if(isset($_GET["json"]) || isset($_POST['json'])) {
 	            foreach($views as $view) {
 	                app("ryadmin")->setData($view->getData());
 	                app("ryadmin")->terminate();
