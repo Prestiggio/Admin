@@ -190,22 +190,17 @@ HERE;
         });
         
         Event::listen("ryadminnotify*", function($eventName, array $data){
-            $site = app("centrale")->getSite();
-            if($site->nsetup['emailing'])
-                list($to) = $data;
-            else
-                $to = isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
             $templates = NotificationTemplate::whereHas("alerts", function($q)use($eventName){
                 $q->whereCode($eventName);
             })
             ->where("channels", "LIKE", '%MailSender%')->get();
             if($templates->count()>0) {
                 foreach($templates as $template) {
-                    Mail::to($to)->send(new EventCaught($template, $data));
+                    Mail::send(new EventCaught($template, $data));
                 }
             }
             elseif($eventName=='ryadminnotify_insert_user') {
-                Mail::to($to)->send(new UserInsertCaught($data));
+                Mail::send(new UserInsertCaught($data));
             }
         });
         

@@ -721,6 +721,7 @@ class AdminController extends Controller
         $template = new NotificationTemplate();
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
+        $template->nsetup = $ar['template']['nsetup'];
         $template->save();
         if(isset($ar['alerts'])) {
             foreach($ar['alerts'] as $alert_id => $alert) {
@@ -742,6 +743,7 @@ class AdminController extends Controller
                 "path" => $path,
             ]);
         }
+        $template->append('nsetup');
         $template->setAttribute('title', $template->name);
         $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
         $template->makeVisible(['title', 'subject']);
@@ -757,6 +759,7 @@ class AdminController extends Controller
     public function get_templates_edit(Request $request) {
         $template = NotificationTemplate::with("alerts")->find($request->get("id"));
         $template->makeHidden('channels');
+        $template->append('nsetup');
         $contents = [];
         $site = app("centrale")->getSite();
         $setup = $site->nsetup;
@@ -822,6 +825,7 @@ class AdminController extends Controller
         $template = NotificationTemplate::find($request->get("id"));
         $template->name = $ar['template']['name'];
         $template->archannels = isset($ar['template']['channels']) ? $ar['template']['channels'] : [];
+        $template->nsetup = $ar['template']['nsetup'];
         $template->save();
         if(isset($ar['alerts'])) {
             foreach($ar['alerts'] as $alert_id => $alert) {
@@ -851,6 +855,7 @@ class AdminController extends Controller
                 ]);
             }
         }
+        $template->append('nsetup');
         $template->setAttribute('title', $template->name);
         $template->setAttribute('subject', isset($content['bindings']['subject'])?$content['bindings']['subject']:$template->name);
         $template->makeVisible(['title', 'subject']);
