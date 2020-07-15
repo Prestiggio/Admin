@@ -196,7 +196,7 @@ trait LanguageTranslationController
     public function postTranslation($translation_string, $lang=null) {
         if(!$lang)
             $lang = config('app.fallback_locale');
-        $exists = LanguageTranslation::where("translation_string", "LIKE", $translation_string)->whereLang($lang)->first();
+        $exists = LanguageTranslation::where("translation_string", "=", $translation_string)->whereLang($lang)->first();
         if($exists)
             return $exists->slug;
         $slug = $translation_string;
