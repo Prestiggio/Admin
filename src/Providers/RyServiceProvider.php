@@ -39,6 +39,8 @@ use \ReflectionClass;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Ry\Admin\Console\Commands\Gettext;
+use Ry\Admin\Models\Pretention;
+use Ry\Admin\Http\Middleware\PretendedMiddleware;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -330,6 +332,9 @@ HERE;
     	$this->app->singleton("admin", function(){
     		return new Administration();
     	});
+	    $this->app->singleton('pretended', function(){
+	        return new PretendedMiddleware();
+	    });
     	$this->app->singleton("rygame.admin", function($app){
     		return new Admin();
     	});

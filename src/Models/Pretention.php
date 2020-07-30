@@ -5,6 +5,7 @@ namespace Ry\Admin\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\User;
+use Illuminate\Support\Str;
 
 class Pretention extends Model
 {
@@ -18,10 +19,13 @@ class Pretention extends Model
         static::where('expire_at', '<', Carbon::yesterday())->delete();
         $pretention = static::whereUserId($user_id)->wherePretendedId($pretended_id)->where('expire_at', '>', Carbon::now())->first();
         if(!$pretention) {
-            $pretention = new self();
-            $pretention->user_id = $user_id;
-            $pretention->pretended_id = $pretended_id;
-            $pretention->token = str_random(32);
+            $pretention = static::whereUserId($user_id)->wherePretendedId($pretended_id)->first();
+            if(!$pretention) {
+                $pretention = new self();
+                $pretention->user_id = $user_id;
+                $pretention->pretended_id = $pretended_id;
+            }
+            $pretention->token = Str::random(32);
             $pretention->expire_at = Carbon::now()->addMinute(10);
             $pretention->save();
         }
