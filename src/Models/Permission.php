@@ -41,6 +41,8 @@ class Permission extends Model
         $ar = explode("::", $method);
         $ability = str_replace('\\', '.', $ar[0]).'.'.$ar[1];
         $permissions = app("ryadmin")->getCache();
+        if(!$permissions)
+            $permissions = [];
         if(in_array($method, $permissions, true)) {
             $controller = app($ar[0]);
             $controller->authorize($method);
