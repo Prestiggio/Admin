@@ -470,7 +470,7 @@ class AdminController extends Controller
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $user['contacts']);
         
-        event("ryadminnotify_insert_user", [$_user, [
+        event("ryadminnotify_insert_" . $_user->guard, [$_user, [
             'user' => $_user, 
             'password' => $password]]);
         

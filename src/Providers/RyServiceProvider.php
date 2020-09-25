@@ -201,7 +201,7 @@ HERE;
                     Mail::send(new EventCaught($template, $data));
                 }
             }
-            elseif($eventName=='ryadminnotify_insert_user') {
+            elseif(preg_match("/^ryadminnotify_insert_/", $eventName)) {
                 Mail::send(new UserInsertCaught($data));
             }
         });
