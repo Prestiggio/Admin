@@ -470,7 +470,7 @@ class AdminController extends Controller
         
         app("\Ry\Profile\Http\Controllers\AdminController")->putContacts($_user, $user['contacts']);
         
-        event("ryadminnotify_insert_user", [$_user, [
+        event("ryadminnotify_insert_" . $_user->guard, [$_user, [
             'user' => $_user, 
             'password' => $password]]);
         
@@ -623,6 +623,8 @@ class AdminController extends Controller
             $ar['profile']['adresse_id'] = app(GeoController::class)->generate($ar['profile']['adresse'])->id;
             unset($ar['profile']['adresse']);
         }
+        if(!isset($ar['profile']['official']) && isset($ar['profile']['firstname']) && isset($ar['profile']['lastname']))
+            $ar['profile']['official'] = $ar['profile']['firstname'].' '.$ar['profile']['lastname'];
         $_user->profile()->update($ar['profile']);
         
         if($request->has("nophoto")) {

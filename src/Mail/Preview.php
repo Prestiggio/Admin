@@ -56,7 +56,7 @@ class Preview extends Mailable
         //get the template file
         $this->from("no-reply@".env('APP_DOMAIN'), $this->signature);
         $site = app("centrale")->getSite();
-        if(!$site->nsetup['emailing']) {
+        if(!$site->nsetup['general']['email']) {
             $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         else {
