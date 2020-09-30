@@ -14,6 +14,8 @@ use Auth;
 use Twig\Lexer;
 use Ry\Centrale\Models\Push;
 use App\User;
+use Twig\Loader\ArrayLoader;
+use Twig\Environment;
 
 class Preview extends Mailable
 {
@@ -30,13 +32,15 @@ class Preview extends Mailable
     {
         //$content = str_replace("</twig>", "}}", preg_replace("/\<twig macro=\"([^\"]+)\"\>[^\<]*/", '{{$1', $content));
         $content = str_replace("</twig>", "", preg_replace("/\<twig macro=\"([^\"]+)\"\>[^\<]*/", '$1', $content));
-        $loader = new \Twig_Loader_Array([
+        $loader = new ArrayLoader([
             'subject' => str_replace('{{', '', str_replace('}}', '', $subject)),
             'signature' => str_replace('{{', '', str_replace('}}', '', $signature)),
             'content' => $content
         ]);
         $this->data = $data;
-        $twig = new \Twig_Environment($loader);
+        $twig = new Environment($loader);
+        $site = app("centrale")->getSite();
+        $twig->addGlobal("site", $site->nsetup);
         $this->subject = $twig->render("subject", $data);
         $this->signature = $twig->render("signature", $data);
         $this->content = $twig->render("content", $data);
