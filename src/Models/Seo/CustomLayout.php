@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Ry\Admin\Models\Traits\HasJsonSetup;
 use Illuminate\Support\Collection;
+use Twig\Loader\ArrayLoader;
+use Twig\Environment;
 
 class CustomLayout extends Model
 {
@@ -81,10 +83,10 @@ class CustomLayout extends Model
             }
         }
         foreach($includes as $block_name => $include_path) {
-            $loader = new \Twig_Loader_Array([
+            $loader = new ArrayLoader([
                 'content' => Storage::disk('local')->get($include_path)
             ]);
-            $twig = new \Twig_Environment($loader);
+            $twig = new Environment($loader);
             ?>
             <div id="<?php echo $block_name; ?>">
             	<?php echo $twig->render("content", $vars); ?>

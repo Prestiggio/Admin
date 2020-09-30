@@ -2,18 +2,10 @@
 
 namespace Ry\Admin\Mail;
 
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\View;
 use Ry\Profile\Models\NotificationTemplate;
-use Illuminate\View\Compilers\BladeCompiler;
-use Illuminate\Support\Facades\Storage;
-use Auth;
-use Twig\Lexer;
 use Ry\Centrale\Models\Push;
-use App\User;
 use Twig\Loader\ArrayLoader;
 use Twig\Environment;
 
