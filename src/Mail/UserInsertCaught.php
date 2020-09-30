@@ -39,7 +39,7 @@ class UserInsertCaught extends Mailable
         $payload['signature'] = env('APP_NAME');
         $payload['contact_email'] = env('DEBUG_RECIPIENT_EMAIL');
         $site = app("centrale")->getSite();
-        if(!$site->nsetup['emailing']) {
+        if(!$site->nsetup['general']['email']) {
             $this->to = [['address' => isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com'), 'name' => 'Default recipient']];
         }
         else {

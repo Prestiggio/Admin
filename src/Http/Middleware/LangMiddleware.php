@@ -20,10 +20,10 @@ class LangMiddleware
         if($request->has('lang')) {
             $lang = $request->get('lang');
             if(is_string($lang))
-                session(['lang' => $lang]);
+                session()->put('lang', $lang);
         }
         
-        App::setLocale($request->session()->get('lang', App::getLocale()));
+        App::setLocale(session()->get('lang', App::getLocale()));
         
         View::share("lang", App::getLocale());
         

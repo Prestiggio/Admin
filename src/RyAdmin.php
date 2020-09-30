@@ -65,7 +65,7 @@ class RyAdmin
     public function terminate() {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
         $debugbar = app('debugbar');
-        if($debugbar) {
+        if($debugbar && env('APP_ENV')=='development') {
             $this->data['_debugbar'] = $debugbar->getData();
         }
         $response = response()->json($this->data);

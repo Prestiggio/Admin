@@ -39,6 +39,8 @@ use \ReflectionClass;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Ry\Admin\Console\Commands\Gettext;
+use Ry\Admin\Models\Pretention;
+use Ry\Admin\Http\Middleware\PretendedMiddleware;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -154,7 +156,7 @@ HERE;
     	});
     	
 	    Event::listen("composing:*", function($name, $views){
-	        if(isset($_GET["json"])) {
+	        if(isset($_GET["json"]) || isset($_POST['json'])) {
 	            foreach($views as $view) {
 	                app("ryadmin")->setData($view->getData());
 	                app("ryadmin")->terminate();
@@ -190,22 +192,17 @@ HERE;
         });
         
         Event::listen("ryadminnotify*", function($eventName, array $data){
-            $site = app("centrale")->getSite();
-            if($site->nsetup['emailing'])
-                list($to) = $data;
-            else
-                $to = isset($site->nsetup['contact']['email']) ? $site->nsetup['contact']['email'] : env('DEBUG_RECIPIENT_EMAIL', 'folojona@gmail.com');
             $templates = NotificationTemplate::whereHas("alerts", function($q)use($eventName){
                 $q->whereCode($eventName);
             })
             ->where("channels", "LIKE", '%MailSender%')->get();
             if($templates->count()>0) {
                 foreach($templates as $template) {
-                    Mail::to($to)->send(new EventCaught($template, $data));
+                    Mail::send(new EventCaught($template, $data));
                 }
             }
-            elseif($eventName=='ryadminnotify_insert_user') {
-                Mail::to($to)->send(new UserInsertCaught($data));
+            elseif(preg_match("/^ryadminnotify_insert_/", $eventName)) {
+                Mail::send(new UserInsertCaught($data));
             }
         });
         
@@ -335,6 +332,9 @@ HERE;
     	$this->app->singleton("admin", function(){
     		return new Administration();
     	});
+	    $this->app->singleton('pretended', function(){
+	        return new PretendedMiddleware();
+	    });
     	$this->app->singleton("rygame.admin", function($app){
     		return new Admin();
     	});
