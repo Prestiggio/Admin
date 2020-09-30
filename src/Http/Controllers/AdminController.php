@@ -622,6 +622,8 @@ class AdminController extends Controller
             $ar['profile']['adresse_id'] = app(GeoController::class)->generate($ar['profile']['adresse'])->id;
             unset($ar['profile']['adresse']);
         }
+        if(!isset($ar['profile']['official']) && isset($ar['profile']['firstname']) && isset($ar['profile']['lastname']))
+            $ar['profile']['official'] = $ar['profile']['firstname'].' '.$ar['profile']['lastname'];
         $_user->profile()->update($ar['profile']);
         
         if($request->has("nophoto")) {
