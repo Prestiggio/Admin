@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\View\View;
 use Auth;
 use Ry\Admin\Models\Seo\CustomLayout;
+use Twig\Loader\ArrayLoader;
+use Twig\Environment;
 
 class AuthComposer
 {
@@ -43,10 +45,10 @@ class AuthComposer
             }
             foreach($customizations as $block_name => $content) {
                 $page['full_title'] = true;
-                $loader = new \Twig_Loader_Array([
+                $loader = new ArrayLoader([
                     'content' => $content
                 ]);
-                $twig = new \Twig_Environment($loader);
+                $twig = new Environment($loader);
                 $page[$block_name] = $twig->render("content", $data);
             }
             $view->with('page', $page);

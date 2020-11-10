@@ -50,6 +50,7 @@ class UserInsertCaught extends Mailable
             "email" => $template
         ]);
         $twig = new Environment($loader);
+        $twig->addGlobal('site', $site->nsetup);
         return $this->html($twig->render("email", $payload));
     }
 }
