@@ -96,9 +96,18 @@ trait LanguageTranslationController
                 ];
             }
         }
+        $site = app("centrale")->getSite();
+        $setup = $site->nsetup;
+        $languages = [];
+        if(isset($setup[Language::class])) {
+            foreach($setup[Language::class] as $lang) {
+                $languages[] = $lang["code"];
+            }
+        }
         return view("fragment", [
             "view" => "Ry.Admin.Traductions",
             "presets" => $presets, 
+            "languages" => $languages,
             "locale" => App::getLocale()
         ]);
     }
