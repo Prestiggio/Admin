@@ -227,11 +227,37 @@ class AdminController extends Controller
         Alert::where('id', '=', $request->get('id'))->delete();
     }
     
-    public function post_update_menus(Request $request) {
-        $ar = $request->all();
-        if($request->has('site_id'))
-            app('centrale')->setSite($request->get('site_id'));
-        foreach($ar["layouts"] as $layout) {
+    public function copyMenus($layouts, $site_id) {
+        foreach($layouts as $layout) {
+            if(isset($layout['sections'])) {
+                foreach ($layout['sections'] as $section) {
+                    $_section = LayoutSection::whereName($section['name'])->first();
+                    if(!$_section) {
+                        $_section = new LayoutSection();
+                        $_section->layout_id = $section['layout_id'];
+                        $_section->name = $section['name'];
+                        $_section->active = ($section['active']=='true');
+                    }
+                    $_section->setup = $section["setup"];
+                    $_section->save();
+                    
+                    app('centrale')->toSite($_section, $site_id);
+                }
+            }
+            if(isset($layout['roles'])) {
+                foreach($layout['roles'] as $role) {
+                    foreach($role['layout_overrides'] as $layout_override) {
+                        RoleLayout::whereRoleId($layout_override['role_id'])->whereLayoutId($layout_override['layout_id'])->update([
+                            'sections_setup' => json_encode($layout_override['setup'])
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+    
+    public function updateMenus($layouts, $site_id) {
+        foreach($layouts as $layout) {
             if(isset($layout['sections'])) {
                 foreach ($layout['sections'] as $section) {
                     if(isset($section['updated'])) {
@@ -247,7 +273,7 @@ class AdminController extends Controller
                         $_section->setup = $section["setup"];
                         $_section->save();
                         
-                        app('centrale')->toSite($_section, $request->get('site_id'));
+                        app('centrale')->toSite($_section, $site_id);
                     }
                 }
             }
@@ -263,6 +289,14 @@ class AdminController extends Controller
                 }
             }
         }
+    }
+    
+    public function post_update_menus(Request $request) {
+        $ar = $request->all();
+        if($request->has('site_id'))
+            app('centrale')->setSite($request->get('site_id'));
+        $site_id = app("centrale")->getSite()->id;
+        $this->updateMenus($ar['layouts'], $site_id);
         return [
             "type" => "setup"
         ];
