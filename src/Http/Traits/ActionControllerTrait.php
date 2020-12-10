@@ -8,6 +8,7 @@ use Ry\Admin\Models\LanguageTranslation;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Ry\Admin\Interfaces\ThemeOverride;
 
 trait ActionControllerTrait
 {
@@ -18,7 +19,7 @@ trait ActionControllerTrait
         $controller_action = $method . '_' . $action;
         if(method_exists($this, $controller_action)) {
             $theme = app('centrale')->getTheme();
-            if($theme) {
+            if($theme && ($theme instanceof ThemeOverride)) {
                 return $theme->override($this, $controller_action, $request);
             }
             return $this->$controller_action($request);

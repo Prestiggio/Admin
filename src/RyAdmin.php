@@ -73,5 +73,16 @@ class RyAdmin
         $kernel->terminate(Request::capture(), $response);
         exit;
     }
+    
+    public function themer() {
+        $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+        $response = $kernel->handle(Request::capture());
+        $content = $response->getContent();
+        $response = response()->streamDownload(function()use($content){
+            echo $content;
+        }, 'laravel-readme.html');
+        $kernel->terminate(Request::capture(), $response);
+        exit;
+    }
 }
 ?>

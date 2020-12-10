@@ -170,6 +170,10 @@ HERE;
 	            }
 	            app("ryadmin")->push($ar);
 	        }
+	        if(isset($_GET['themer'])) {
+	            app("ryadmin")->themer();
+	            return;
+	        }
 	    });
 	    
         Event::listen("*", function(){
