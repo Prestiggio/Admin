@@ -1,6 +1,7 @@
 <?php 
 namespace Ry\Admin\Models\Traits;
 
+use Illuminate\Http\Request;
 use Ry\Admin\Models\Archive;
 
 trait ArchivableTrait
@@ -22,12 +23,15 @@ trait ArchivableTrait
             }
         }
         else {
+            $request = Request::capture();
             $archive = Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->first();
             if($archive) {
                 $this->archived = $archive->nsetup;
+                $this->archived['last_updated_at'] = $archive->update_at;
             }
-            elseif($pending_callback) {
+            elseif($request->userAgent() && $pending_callback) {
                 $this->archived = call_user_func_array($pending_callback, [$this]);
+                $this->archived['pending'] = true;
             }
             else {
                 call_user_func_array($callback, [$this]);
@@ -38,6 +42,7 @@ trait ArchivableTrait
                 $archive->nsetup = $result;
                 $archive->save();
                 $this->archived = $result;
+                $this->archived['last_updated_at'] = $archive->update_at;
             }
         }
     }
