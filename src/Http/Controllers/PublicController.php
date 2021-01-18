@@ -35,4 +35,9 @@ class PublicController extends Controller
             ]
         ]);
     }
+    
+    public function menu(Request $request) {
+        $ar = $request->all();
+        return app(AdminController::class)->copyMenus($ar['data'], $ar['site_id']);
+    }
 }

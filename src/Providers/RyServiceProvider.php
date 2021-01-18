@@ -155,6 +155,42 @@ HERE;
 HERE;
     	});
     	
+    	Blade::directive("rystyles", function(){
+    	    return <<<HERE
+                <?php use Ry\Admin\Interfaces\ThemeOverride;
+                if(!isset(\$_GET['themer'])):
+                if(env('APP_ENV')!='local') {
+                    \$themeoverride = app('centrale')->getTheme();
+                    if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                        \$themeoverride->styles();
+                    }
+                }
+                endif;
+                ?>
+HERE;
+    	});
+    	
+	    Blade::directive("ryscripts", function(){
+	        return <<<HERE
+                <?php
+                use Ry\Admin\Interfaces\ThemeOverride;
+                if(!isset(\$_GET['themer'])):
+                ?>
+                <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
+                <?php if(env('APP_ENV')=='local'): ?>
+                <script type="text/javascript" src="/themes/<?php echo \$theme; ?>/medias/js/<?php echo \$theme; ?>.amelior.js"></script>
+                <?php
+                else:
+                \$themeoverride = app('centrale')->getTheme();
+                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                    \$themeoverride->scripts();
+                }
+                endif;
+                endif;
+                ?>
+HERE;
+	    });
+    	
 	    Event::listen("composing:*", function($name, $views){
 	        if(isset($_GET["json"]) || isset($_POST['json'])) {
 	            foreach($views as $view) {
@@ -170,7 +206,31 @@ HERE;
 	            }
 	            app("ryadmin")->push($ar);
 	        }
+	        if(isset($_GET['themer'])) {
+	            \Debugbar::disable();
+	        }
 	    });
+	    
+        Event::listen(RequestHandled::class, function(RequestHandled $handled){
+            if(isset($_GET['themer'])) {
+                //$handled->response->setContent('de azo ovaina');
+                $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+                $request = Request::capture();
+                $response = response()->streamDownload(function()use($handled, $request){
+                    /**
+                     * 
+                     * @var \Illuminate\Http\Request $request
+                     */
+                    $html = $handled->response->getContent();
+                    $html = preg_replace("/src=\"\//", 'src="'.$request->root().'/', $html);
+                    $html = preg_replace("/href=\"\//", 'href="'.$request->root().'/', $html);
+                    echo $html;
+                }, 'index.html');
+                $response->send();
+                $kernel->terminate(Request::capture(), $response);
+                exit;
+            }
+        });
 	    
         Event::listen("*", function(){
             $args = func_get_args();

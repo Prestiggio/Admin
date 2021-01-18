@@ -25,6 +25,8 @@ use Ry\Medias\Models\Media;
 use Illuminate\Filesystem\Filesystem;
 use Ry\Admin\Models\Model;
 use Ry\Admin\Models\Alert;
+use Ry\Centrale\SiteScope;
+use Ry\Centrale\Models\SiteRestriction;
 use Ry\Profile\Models\Profile;
 use Ry\Geo\Http\Controllers\PublicController as GeoController;
 
@@ -227,11 +229,85 @@ class AdminController extends Controller
         Alert::where('id', '=', $request->get('id'))->delete();
     }
     
-    public function post_update_menus(Request $request) {
-        $ar = $request->all();
-        if($request->has('site_id'))
-            app('centrale')->setSite($request->get('site_id'));
-        foreach($ar["layouts"] as $layout) {
+    public function copyMenus($layouts, $site_id) {
+        $debug = [];
+        foreach($layouts as $layout) {
+            if(isset($layout['sections'])) {
+                foreach ($layout['sections'] as $section) {
+                    $_section = LayoutSection::whereName($section['name'])->whereLayoutId($section['layout_id'])->first();
+                    $debug[] = $_section;
+                    if(!$_section) {
+                        $_section = new LayoutSection();
+                        $_section->layout_id = $section['layout_id'];
+                        $_section->name = $section['name'];
+                        $_section->active = ($section['active']=='true');
+                    }
+                    $_section->setup = $section["setup"];
+                    $_section->save();
+                    
+                    app('centrale')->toSite($_section, $site_id);
+                }
+            }
+            if(isset($layout['roles'])) {
+                foreach($layout['roles'] as $role) {
+                    foreach($role['layout_overrides'] as $layout_override) {
+                        RoleLayout::whereRoleId($layout_override['role_id'])->whereLayoutId($layout_override['layout_id'])->update([
+                            'sections_setup' => json_encode($layout_override['setup'])
+                        ]);
+                    }
+                }
+            }
+        }
+        return $debug;
+    }
+    
+    public function copyMails($site_source_id, $site_destination_id) {
+        $destination_template_restrictions = SiteRestriction::whereScopeType(NotificationTemplate::class)->whereSiteId($site_destination_id)->get();
+        $alerted = [];
+        foreach ($destination_template_restrictions as $destination_template_restriction) {
+            $destination_scope = $destination_template_restriction->scope()->withoutGlobalScope(app(SiteScope::class))->first();
+            if($destination_scope) {
+                foreach($destination_scope->alerts as $alert) {
+                    $alerted[$alert->code] = true;
+                }
+            }
+        }
+        $latest_site_template_restrictions = SiteRestriction::whereScopeType(NotificationTemplate::class)->whereSiteId($site_source_id)->get();
+        foreach($latest_site_template_restrictions as $latest_site_template_restriction) {
+            $scope = $latest_site_template_restriction->scope()->withoutGlobalScope(app(SiteScope::class))->first();
+            $_alerted = false;
+            if($scope) {
+                foreach($scope->alerts as $alert) {
+                    if(isset($alerted[$alert->code])) {
+                        $_alerted = true;
+                        break;
+                    }
+                }
+                if($_alerted)
+                    continue;
+                
+                $template = $scope->replicate();
+                $template->save();
+                foreach($scope->alerts as $alert) {
+                    $template->alerts()->attach($alert->id);
+                }
+                app("centrale")->toSite($template, $site_destination_id);
+                $medias = Media::whereMediableType(NotificationTemplate::class)->whereMediableId($scope->id)->get();
+                foreach($medias as $prev_media) {
+                    $media = $prev_media->replicate();
+                    $path = "notification_templates/" . $template->id . "-".$media->title.".html";
+                    if(!Storage::disk('local')->exists($path) && Storage::disk('local')->copy($media->path, $path)) {
+                        $media->path = $path;
+                    }
+                    $media->mediable_id = $template->id;
+                    $media->save();
+                }
+            }
+        }
+    }
+    
+    public function updateMenus($layouts, $site_id) {
+        foreach($layouts as $layout) {
             if(isset($layout['sections'])) {
                 foreach ($layout['sections'] as $section) {
                     if(isset($section['updated'])) {
@@ -247,7 +323,7 @@ class AdminController extends Controller
                         $_section->setup = $section["setup"];
                         $_section->save();
                         
-                        app('centrale')->toSite($_section, $request->get('site_id'));
+                        app('centrale')->toSite($_section, $site_id);
                     }
                 }
             }
@@ -263,6 +339,14 @@ class AdminController extends Controller
                 }
             }
         }
+    }
+    
+    public function post_update_menus(Request $request) {
+        $ar = $request->all();
+        if($request->has('site_id'))
+            app('centrale')->setSite($request->get('site_id'));
+        $site_id = app("centrale")->getSite()->id;
+        $this->updateMenus($ar['layouts'], $site_id);
         return [
             "type" => "setup"
         ];
