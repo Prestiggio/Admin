@@ -7,8 +7,8 @@ trait ArchivableTrait
 {
     private $archived = false;
     
-    public function archive($insert, $callback, $else_callback=null) {
-        if(!$insert) {
+    public function archive($insert, $callback, $else_callback=null, $pending_callback=null) {
+        if(!$insert && !$pending_callback) {
             $is_archived = false;
             if($else_callback) {
                 $is_archived = call_user_func_array($else_callback, [$this, true]);
@@ -25,6 +25,9 @@ trait ArchivableTrait
             $archive = Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->first();
             if($archive) {
                 $this->archived = $archive->nsetup;
+            }
+            elseif($pending_callback) {
+                $this->archived = call_user_func_array($pending_callback, [$this]);
             }
             else {
                 call_user_func_array($callback, [$this]);
