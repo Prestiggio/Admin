@@ -26,33 +26,6 @@ class AuthComposer
         if(session()->has('message')) {
             $view->with("message", session('message'));
         }
-        $data = $view->getData();
-        if(isset($data['page'])) {
-            $page = $data['page'];
-            $locale = App::getLocale();
-            $fallback_locale = config('app.fallback_locale');
-            $customizations = [];
-            $blocks = CustomLayout::fetchBlocks();
-            foreach($blocks as $block) {
-                if($block->inline_content!='' && $locale!=$fallback_locale && $block->lang==$fallback_locale) {
-                    $customizations[$block->name] = $block->inline_content;
-                }
-            }
-            foreach($blocks as $block) {
-                if($block->inline_content!='' && $block->lang==$locale) {
-                    $customizations[$block->name] = $block->inline_content;
-                }
-            }
-            foreach($customizations as $block_name => $content) {
-                $page['full_title'] = true;
-                $loader = new ArrayLoader([
-                    'content' => $content
-                ]);
-                $twig = new Environment($loader);
-                $page[$block_name] = $twig->render("content", $data);
-            }
-            $view->with('page', $page);
-        }
         $sitemap = [];
         if($this->me) {
             $guard = $this->me->guard;

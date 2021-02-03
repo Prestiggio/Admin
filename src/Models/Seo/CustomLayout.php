@@ -45,11 +45,12 @@ class CustomLayout extends Model
                     $blocks[$block->name] = $block;
                 }
             }
-            $query_custom_layout = static::whereRoute($request->route()->action['controller']);
+            $controller = $request->route()->action['controller'];
+            $query_custom_layout = static::whereRoute($controller);
             $action = $request->route('action', false);
             if($action)
                 $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->action', $action);
-            else
+            elseif(preg_match("/index$/i", $controller))
                 $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->action', 'index');
             $page = $request->route('page', false);
             if($page)
