@@ -108,7 +108,7 @@ trait LanguageTranslationController
             "view" => "Ry.Admin.Traductions",
             "presets" => $presets, 
             "languages" => $languages,
-            "locale" => App::getLocale()
+            "locale" => config('app.fallback_locale', 'fr')
         ]);
     }
     

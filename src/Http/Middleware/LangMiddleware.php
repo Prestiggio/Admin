@@ -17,7 +17,7 @@ class LangMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if($request->has('lang')) {
+        if($request->method()=='GET' && $request->has('lang')) {
             $lang = $request->get('lang');
             if(is_string($lang))
                 session()->put('lang', $lang);
