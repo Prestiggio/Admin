@@ -8,7 +8,7 @@ trait ArchivableTrait
 {
     private $archived = false;
     
-    private static $CACHE = [];
+    public static $CACHE = [];
     
     public function archive($frozen, $callback, $else_callback=null, $pending_callback=null) {
         $archive = Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->first();
@@ -91,6 +91,12 @@ trait ArchivableTrait
             if($archive) {
                 $this->archived = $archive->nsetup;
                 $this->archived['archived'] = true;
+            }
+            else {
+                static::$CACHE[get_class($this)][$this->id] = false;
+                $this->archived = [
+                    'archived' => false
+                ];
             }
         }
         return $this->archived;
