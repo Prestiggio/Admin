@@ -81,7 +81,7 @@ trait LanguageTranslationController
     
     public function delete_translations(Request $request) {
         Permission::authorize(__METHOD__);
-        Translation::find($request->get("translation_id"))->delete();
+        Translation::where('id', '=', $request->get("translation_id"))->delete();
         LanguageTranslation::where("translation_id", "=", $request->get("translation_id"))->delete();
     }
     
@@ -143,7 +143,7 @@ trait LanguageTranslationController
         }
         if($ar['lang'][config('app.fallback_locale')]=='')
             abort(404, __("Aucune traduction n'a été soumise"));
-        if(Translation::where("code", "LIKE", $ar['lang'][config('app.fallback_locale')])->exists())
+        if(Translation::where("code", "LIKE BINARY", $ar['lang'][config('app.fallback_locale')])->exists())
             return abort(409, __("Cette traduction existe déja"));
         
         $translation = Translation::create([

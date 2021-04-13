@@ -15,11 +15,11 @@ class PublicController extends Controller
         $languages = [];
         $translations = LanguageTranslation::whereLang($lang)->with(["slug"])->get();
         foreach($translations as $translation) {
-            $languages[$translation->slug->code] = $translation->translation_string;
+            $languages[mb_convert_encoding($translation->slug->code, "UTF-8")] = $translation->translation_string;
         }
         return response()->view("ryadmin::languages", [
             "lang" => $lang,
-            "translations" => json_encode($languages)
+            "translations" => json_encode($languages, JSON_UNESCAPED_UNICODE)
         ])->header('Content-Type', 'text/javascript; charset=UTF-8');
     }
     
