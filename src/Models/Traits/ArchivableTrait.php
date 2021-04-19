@@ -9,10 +9,8 @@ trait ArchivableTrait
 {
     private $archiver;
     
-    public static $ARCHIVER_CLASS;
-    
     public function archive() {
-        if(static::$ARCHIVER_CLASS) {
+        if(app("centrale")->getArchiver(get_class($this))) {
             $archive = Archive::whereArchivableType(get_class($this))->whereArchivableId($this->id)->first();
             if(!$archive) {
                 $archive = new Archive();
@@ -32,7 +30,7 @@ trait ArchivableTrait
                 $archive->nsetup = $setup;
                 $archive->save();
                 
-                $result = $archiver->toArray();
+                $result = $archiver->unclosedToArray();
                 $result['pending'] = false;
                 if($archiver->isClosed())
                     $result['closed'] = Carbon::now()->format('Y-m-d H:i:s');
@@ -43,9 +41,10 @@ trait ArchivableTrait
     }
     
     public function getArchiver() {
-        if(static::$ARCHIVER_CLASS) {
+        if(app("centrale")->getArchiver(get_class($this))) {
             if(!$this->archiver) {
-                $this->archiver = new static::$ARCHIVER_CLASS($this);
+                $c = app("centrale")->getArchiver(get_class($this));
+                $this->archiver = new $c($this);
             }
             return $this->archiver;
         }
@@ -53,7 +52,10 @@ trait ArchivableTrait
     }
     
     public function toArray() {
-        return $this->getArchiver()->toArray();
+        if(app("centrale")->getArchiver(get_class($this))) {
+            return $this->getArchiver()->toArray();
+        }
+        return parent::toArray();
     }
     
     public function unarchive() {
