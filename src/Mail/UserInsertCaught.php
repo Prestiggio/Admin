@@ -34,7 +34,7 @@ class UserInsertCaught extends Mailable
     {
         //get the template file
         $this->from("no-reply@".env('APP_DOMAIN'), env('APP_DOMAIN'));
-        $this->subject(__('Création de votre compte :app_name', ['app_name' => env('APP_NAME')]));
+        $this->subject(__('Welcome at :app_name', ['app_name' => env('APP_NAME')]));
         list($to, $payload) = $this->data;
         $payload['signature'] = env('APP_NAME');
         $payload['contact_email'] = env('DEBUG_RECIPIENT_EMAIL');
