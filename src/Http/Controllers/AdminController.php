@@ -528,7 +528,7 @@ class AdminController extends Controller
             "lastname" => $user['profile']["lastname"],
             "official" => $user['profile']["firstname"]." ".$user['profile']["lastname"],
             "adresse_id" => isset($user['profile']['adresse_id']) ? $user['profile']['adresse_id'] : null,
-            "languages" => "fr",
+            "languages" => isset($user['profile']['languages']) ? $user['profile']['languages'] : "fr",
             "setup" => $setup
         ]);
         
