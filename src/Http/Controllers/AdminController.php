@@ -639,6 +639,9 @@ class AdminController extends Controller
         if(isset($ar['profile']['nsetup'])) {
             $nsetup = $ar['profile']['nsetup'];
             Profile::unescape($nsetup);
+            if($_user->profile && $_user->profile->nsetup) {
+                $nsetup = array_replace($_user->profile->nsetup, $nsetup);
+            }
             $setup = json_encode($nsetup);
             $ar['profile']['setup'] = $setup;
             unset($ar['profile']['nsetup']);
