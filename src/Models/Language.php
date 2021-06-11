@@ -29,6 +29,7 @@ class Language extends Model
     
     public static function export() {
         $fs = new Filesystem();
-        $fs->put(storage_path('app/languages.json'), static::withoutGlobalScope("pretty")->get());
+        $site = app("centrale")->getSite();
+        $fs->put(storage_path('app/languages.json'), json_encode($site->nsetup[static::class]));
     }
 }
