@@ -115,6 +115,8 @@ trait Deferable
         if(!($end instanceof Carbon))
             $end = Carbon::parse($end);
         //keep it into timeline
+        $end->hour(23);
+        $end->minute(59);
         $timeline = new Timeline();
         $timeline->serializable_type = get_class($this);
         $timeline->save_at = $start;
