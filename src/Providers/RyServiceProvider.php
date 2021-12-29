@@ -173,19 +173,14 @@ HERE;
 	    Blade::directive("ryscripts", function(){
 	        return <<<HERE
                 <?php
-                use Ry\Admin\Interfaces\ThemeOverride;
                 if(!isset(\$_GET['themer'])):
                 ?>
                 <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
-                <?php if(env('APP_ENV')=='local'): ?>
-                <script type="text/javascript" src="/themes/<?php echo \$theme; ?>/medias/js/<?php echo \$theme; ?>.amelior.js"></script>
                 <?php
-                else:
                 \$themeoverride = app('centrale')->getTheme();
                 if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
                     \$themeoverride->scripts();
                 }
-                endif;
                 endif;
                 ?>
 HERE;
