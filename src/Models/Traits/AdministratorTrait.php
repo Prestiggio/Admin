@@ -16,7 +16,9 @@ trait AdministratorTrait
 	}
 	
 	public function getLogoutAttribute() {
-	    return route($this->guard . '-logout');
+		if($this->guard)
+	    	return route($this->guard . '-logout');
+		return '/logout';
 	}
 	
 	public function getHidden()
