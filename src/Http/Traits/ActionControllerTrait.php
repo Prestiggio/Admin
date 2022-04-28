@@ -12,7 +12,7 @@ use Ry\Admin\Interfaces\ThemeOverride;
 
 trait ActionControllerTrait
 {
-    public function index($action=null, Request $request) {
+    public function index(Request $request, $action=null) {
         if(!$action)
             return $this->get_dashboard($request);
         $method = strtolower($request->getMethod());
