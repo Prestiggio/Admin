@@ -159,11 +159,9 @@ HERE;
     	    return <<<HERE
                 <?php use Ry\Admin\Interfaces\ThemeOverride;
                 if(!isset(\$_GET['themer'])):
-                if(env('APP_ENV')!='local') {
-                    \$themeoverride = app('centrale')->getTheme();
-                    if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
-                        \$themeoverride->styles();
-                    }
+                \$themeoverride = app('centrale')->getTheme();
+                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                    \$themeoverride->styles();
                 }
                 endif;
                 ?>
@@ -185,6 +183,33 @@ HERE;
                 ?>
 HERE;
 	    });
+
+        Blade::directive("rylayout", function(){
+            return <<<HERE
+                <?php
+                \$__vars = get_defined_vars();
+                \$__ar = [];
+                foreach (\$__vars as \$k => \$v) {
+                    if (preg_match("/^__/", \$k))
+                        continue;
+                    \$__ar[\$k] = \$v;
+                }
+                if (isset(\$errors)) {
+                    \$__ar['errors'] = \$errors->getBags();
+                }
+                \Ry\Admin\Models\Seo\CustomLayout::includes(\$__ar);
+                if(!isset(\$_GET['themer'])):
+                ?>
+                <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
+                <?php
+                \$themeoverride = app('centrale')->getTheme();
+                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                    \$themeoverride->scripts();
+                }
+                endif;
+                ?>
+HERE;
+        });
     	
 	    Event::listen("composing:*", function($name, $views){
 	        if(isset($_GET["json"]) || isset($_POST['json'])) {

@@ -85,16 +85,26 @@ class CustomLayout extends Model
                 }
             }
         }
-        foreach($includes as $block_name => $include_path) {
-            $loader = new ArrayLoader([
-                'content' => Storage::disk('local')->get($include_path)
-            ]);
-            $twig = new Environment($loader);
-            ?>
-            <div id="<?php echo $block_name; ?>">
-            	<?php echo $twig->render("content", $vars); ?>
+        ?>
+        <div>
+            <script type="application/ld+json">
+                <?php echo json_encode($vars); ?>
+            </script>
+            <div>
+                <?php
+                foreach($includes as $block_name => $include_path) {
+                    $loader = new ArrayLoader([
+                        'content' => Storage::disk('local')->get($include_path)
+                    ]);
+                    $twig = new Environment($loader);
+                    ?>
+                    <div id="<?php echo $block_name; ?>">
+                        <?php echo $twig->render("content", $vars); ?>
+                    </div>
+                    <?php
+                } ?>
             </div>
-            <?php
-        }
+        </div>
+        <?php
     }
 }
