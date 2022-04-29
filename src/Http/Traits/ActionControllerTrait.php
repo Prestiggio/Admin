@@ -18,7 +18,8 @@ trait ActionControllerTrait
         $method = strtolower($request->getMethod());
         $controller_action = $method . '_' . $action;
         if(method_exists($this, $controller_action)) {
-            $theme = app('centrale')->getTheme();
+            $theme_name = app('centrale')->themeByHost();
+            $theme = app('centrale')->getTheme($theme_name);
             if($theme && ($theme instanceof ThemeOverride)) {
                 return $theme->override($this, $controller_action, $request);
             }
@@ -59,7 +60,8 @@ trait ActionControllerTrait
             });
         }
         if($method_name!='' && method_exists($this, $method_name)) {
-            $theme = app('centrale')->getTheme();
+            $theme_name = app('centrale')->themeByHost();
+            $theme = app('centrale')->getTheme($theme_name);
             if($theme) {
                 $ret = $theme->override($this, $method_name, $request);
             }

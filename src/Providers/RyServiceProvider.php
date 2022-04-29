@@ -159,7 +159,7 @@ HERE;
     	    return <<<HERE
                 <?php use Ry\Admin\Interfaces\ThemeOverride;
                 if(!isset(\$_GET['themer'])):
-                \$themeoverride = app('centrale')->getTheme();
+                \$themeoverride = app('centrale')->getTheme(\$theme);
                 if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
                     \$themeoverride->styles();
                 }
@@ -175,7 +175,7 @@ HERE;
                 ?>
                 <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
                 <?php
-                \$themeoverride = app('centrale')->getTheme();
+                \$themeoverride = app('centrale')->getTheme(\$theme);
                 if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
                     \$themeoverride->scripts();
                 }
@@ -202,7 +202,7 @@ HERE;
                 ?>
                 <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
                 <?php
-                \$themeoverride = app('centrale')->getTheme();
+                \$themeoverride = app('centrale')->getTheme(\$theme);
                 if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
                     \$themeoverride->scripts();
                 }
