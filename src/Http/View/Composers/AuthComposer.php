@@ -21,6 +21,7 @@ class AuthComposer
         if($this->me) {
             $this->me->loadMissing('unseenNotifications');
             $this->me->loadMissing('contacts');
+            $this->me->loadMissing('profile');
             $view->with('user', $this->me);
         }
         if(session()->has('message')) {

@@ -12,7 +12,13 @@ class PublicController extends Controller
     use ActionControllerTrait;
     
     public function translation($lang) {
-        $languages = [];
+        try {
+            $lang_json = file_get_contents(lang_path($lang.'.json'));
+            $languages = json_decode($lang_json, true);
+        }
+        catch(\Exception $e) {
+            $languages = [];
+        }
         $translations = LanguageTranslation::whereLang($lang)->with(["slug"])->get();
         foreach($translations as $translation) {
             $languages[mb_convert_encoding($translation->slug->code, "UTF-8")] = $translation->translation_string;

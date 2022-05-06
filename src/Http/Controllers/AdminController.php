@@ -154,6 +154,25 @@ class AdminController extends Controller
                         return $this->$controller_action($request);
                 }
             }
+            else {
+                try {
+                    $lang_json = file_get_contents(lang_path('fr.json'));
+                    $languages = json_decode($lang_json, true);
+                    foreach($languages as $k=>$v) {
+                        if(!preg_match("/^\//", $k))
+                            continue;
+
+                        if($action==$v) {
+                            $controller_action = $method . '_' . preg_replace('/^\//', '', $k);
+                            if(method_exists($this, $controller_action))
+                                return $this->$controller_action($request);
+                        }
+                    }
+                }
+                catch(\Exception $e) {
+                    
+                }
+            }
         }
         abort(404);
     }
