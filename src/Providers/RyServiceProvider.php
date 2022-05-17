@@ -41,6 +41,8 @@ use Illuminate\Database\Eloquent\Model;
 use Ry\Admin\Console\Commands\Gettext;
 use Ry\Admin\Models\Pretention;
 use Ry\Admin\Http\Middleware\PretendedMiddleware;
+use Ry\Admin\Models\Seo\CustomLayout;
+use Ry\Admin\Policies\Seo\CustomLayoutPolicy;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -157,10 +159,10 @@ HERE;
     	
     	Blade::directive("rystyles", function(){
     	    return <<<HERE
-                <?php use Ry\Admin\Interfaces\ThemeOverride;
+                <?php
                 if(!isset(\$_GET['themer'])):
                 \$themeoverride = app('centrale')->getTheme(\$theme);
-                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                if(\$themeoverride && (\$themeoverride instanceof Ry\Admin\Interfaces\ThemeOverride)) {
                     \$themeoverride->styles();
                 }
                 endif;
@@ -176,7 +178,7 @@ HERE;
                 <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
                 <?php
                 \$themeoverride = app('centrale')->getTheme(\$theme);
-                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                if(\$themeoverride && (\$themeoverride instanceof Ry\Admin\Interfaces\ThemeOverride)) {
                     \$themeoverride->scripts();
                 }
                 endif;
@@ -203,7 +205,7 @@ HERE;
                 <script type="text/javascript" src="/languages/<?php echo str_replace('_', '-', app()->getLocale()); ?>.js"></script>
                 <?php
                 \$themeoverride = app('centrale')->getTheme(\$theme);
-                if(\$themeoverride && (\$themeoverride instanceof ThemeOverride)) {
+                if(\$themeoverride && (\$themeoverride instanceof Ry\Admin\Interfaces\ThemeOverride)) {
                     \$themeoverride->scripts();
                 }
                 endif;
@@ -393,6 +395,12 @@ HERE;
                 }
                 
             })->everyMinute();
+        });
+
+        Gate::guessPolicyNamesUsing(function($modelClass){
+            if($modelClass==CustomLayout::class) {
+                return CustomLayoutPolicy::class;
+            }
         });
     }
 

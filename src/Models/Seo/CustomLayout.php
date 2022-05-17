@@ -51,7 +51,7 @@ class CustomLayout extends Model
             if($action)
                 $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->action', $action);
             elseif(preg_match("/index$/i", $controller))
-                $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->action', 'index');
+                $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->action', 'index')->orWhere('ry_admin_custom_layouts.setup->controller', $controller);
             $page = $request->route('page', false);
             if($page)
                 $query_custom_layout->where('ry_admin_custom_layouts.setup->parameters->page', $page);
