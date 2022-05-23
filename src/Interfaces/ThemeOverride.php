@@ -17,5 +17,7 @@ interface ThemeOverride
     public function scripts();
     
     public function styles();
+
+    public function handle($includes, $vars);
 }
 ?>
