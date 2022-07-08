@@ -4,12 +4,12 @@ namespace Ry\Admin\Models\Seo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Ry\Admin\Models\Traits\HasJsonSetup;
 use Illuminate\Support\Collection;
 use Twig\Loader\ArrayLoader;
 use Twig\Environment;
+use Illuminate\Support\Facades\Storage;
 
 class CustomLayout extends Model
 {
@@ -85,25 +85,20 @@ class CustomLayout extends Model
                 }
             }
         }
+        $includeds = [];
+        foreach($includes as $block_name => $include_path) {
+            $loader = new ArrayLoader([
+                'content' => Storage::disk('local')->get($include_path)
+            ]);
+            $twig = new Environment($loader);
+            $includeds[$block_name] = $twig->render("content", $vars);
+        }
         ?>
         <div>
+            <?php app('centrale')->render($includeds, $vars); ?>
             <script type="application/ld+json">
                 <?php echo json_encode($vars); ?>
             </script>
-            <div>
-                <?php
-                foreach($includes as $block_name => $include_path) {
-                    $loader = new ArrayLoader([
-                        'content' => Storage::disk('local')->get($include_path)
-                    ]);
-                    $twig = new Environment($loader);
-                    ?>
-                    <div id="<?php echo $block_name; ?>">
-                        <?php echo $twig->render("content", $vars); ?>
-                    </div>
-                    <?php
-                } ?>
-            </div>
         </div>
         <?php
     }
