@@ -41,6 +41,7 @@ use Illuminate\Database\Eloquent\Model;
 use Ry\Admin\Console\Commands\Gettext;
 use Ry\Admin\Models\Pretention;
 use Ry\Admin\Http\Middleware\PretendedMiddleware;
+use Ry\Admin\Jobs\RyAdminNotifier;
 use Ry\Admin\Models\Seo\CustomLayout;
 use Ry\Admin\Policies\Seo\CustomLayoutPolicy;
 
@@ -274,18 +275,7 @@ HERE;
         });
         
         Event::listen("ryadminnotify*", function($eventName, array $data){
-            $templates = NotificationTemplate::whereHas("alerts", function($q)use($eventName){
-                $q->whereCode($eventName);
-            })
-            ->where("channels", "LIKE", '%MailSender%')->get();
-            if($templates->count()>0) {
-                foreach($templates as $template) {
-                    Mail::send(new EventCaught($template, $data));
-                }
-            }
-            elseif(preg_match("/^ryadminnotify_insert_/", $eventName)) {
-                Mail::send(new UserInsertCaught($data));
-            }
+            RyAdminNotifier::dispatch($eventName, $data);
         });
         
         $middlewareGroups = $this->app->router->getMiddlewareGroups();
