@@ -74,15 +74,33 @@ class AuthComposer
             "home" => [
                 'title' => __('Accueil'),
                 'href' => '/',
-                'icon' => 'fa fa-home'
+                'icon' => 'fa fa-home',
+                "@type" => "ListItem",
+                "position" => 1,
+                "name" => __('Accueil'),
+                "item" => url("/")
             ]
         ];
         $existingData = $view->getData();
+        $position = 1;
         if(isset($existingData['parents'])) {
+            foreach($existingData['parents'] as &$item) {
+                $position++;
+                $item['@type'] = 'ListItem';
+                $item['position'] = $position;
+                $item['item'] = url($item['href']);
+                $item['name'] = $item['title'];
+            }
             $breadcrumbs = array_merge($breadcrumbs, $existingData['parents']);
         }
-        if(isset($existingData['page']['href']))
+        if(isset($existingData['page']['href'])) {
+            $position++;
+            $existingData['page']['@type'] = 'ListItem';
+            $existingData['page']['position'] = $position;
+            $existingData['page']['item'] = $existingData['page']['href'];
+            $existingData['page']['name'] = $existingData['page']['title'];
             $breadcrumbs[$existingData['page']['href']] = $existingData['page'];
+        } 
         $view->with("breadcrumbs", [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
