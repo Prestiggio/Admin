@@ -30,6 +30,9 @@ class PublicController extends Controller
     }
     
     public function static_page($page, Request $request) {
+        if(!CustomLayout::whereRoute(PublicController::class.'@static_page')
+        ->where('ry_admin_custom_layouts.setup->parameters->page', $page)->exists() && !$request->has('edit_token'))
+            abort(404);
         $blocks = CustomLayout::fetchBlocks();
         if($blocks->count()==0)
             abort(404);

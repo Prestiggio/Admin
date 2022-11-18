@@ -16,21 +16,31 @@ class ElasticsearchObserver
     public function saved($model)
     {   
         if($model->indexable()) {
-            $this->elasticsearch->index([
-                'index' => $model->getSearchIndex(),
-                'type' => '_doc',
-                'id' => $model->id,
-                'body' => $model->toSearchArray()
-            ]);
+            try {
+                $this->elasticsearch->index([
+                    'index' => $model->getSearchIndex(),
+                    'type' => '_doc',
+                    'id' => $model->id,
+                    'body' => $model->toSearchArray()
+                ]);
+            }
+            catch(\Exception $e) {
+
+            }
         }
     }
     
     public function deleted($model)
     {
-        $this->elasticsearch->delete([
-            'index' => $model->getSearchIndex(),
-            'type' => '_doc',
-            'id' => $model->id,
-        ]);
+        try {
+            $this->elasticsearch->delete([
+                'index' => $model->getSearchIndex(),
+                'type' => '_doc',
+                'id' => $model->id,
+            ]);
+        }
+        catch(\Exception $e) {
+            
+        }
     }
 }
