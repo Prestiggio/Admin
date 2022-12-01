@@ -28,6 +28,8 @@ class CustomLayout extends Model
     public static function fetchBlocks() {
         if(!static::$block_cached) {
             static::$block_cached = true;
+            $locale = App::getLocale();
+            $fallback_locale = config('app.fallback_locale');
             $request = app(Request::class);
             $site = app("centrale")->getSite();
             $guard = 'admin';
@@ -58,7 +60,14 @@ class CustomLayout extends Model
             $custom_layout = $query_custom_layout->first();
             if($custom_layout) {
                 foreach ($custom_layout->blocks as $block) {
-                    $blocks[$block->name] = $block;
+                    if($locale!=$fallback_locale && $block->lang==$fallback_locale) {
+                        $blocks[$block->name] = $block;
+                    }
+                }
+                foreach ($custom_layout->blocks as $block) {
+                    if($block->lang==$locale) {
+                        $blocks[$block->name] = $block;
+                    }
                 }
             }
             static::$cached_blocks = new Collection(array_values($blocks));
