@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Http\Request;
 use Ry\Admin\Models\Traits\HasJsonSetup;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Twig\Loader\ArrayLoader;
 use Twig\Environment;
 use Illuminate\Support\Facades\Storage;
@@ -40,12 +41,10 @@ class CustomLayout extends Model
                     }
                 }
             }
-            $wildcard_custom_layout = CustomLayout::whereRoute($guard)->first();
+            $wildcard_blocks = CustomLayoutBlock::where('setup->wildcard', true)->get();
             $blocks = [];
-            if($wildcard_custom_layout) {
-                foreach($wildcard_custom_layout->blocks as $block) {
-                    $blocks[$block->name] = $block;
-                }
+            foreach($wildcard_blocks as $block) {
+                $blocks[$block->name] = $block;
             }
             $controller = $request->route()->action['controller'];
             $query_custom_layout = static::whereRoute($controller);
