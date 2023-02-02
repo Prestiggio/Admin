@@ -17,12 +17,15 @@ class ElasticsearchObserver
     {   
         if($model->indexable()) {
             try {
-                $this->elasticsearch->index([
-                    'index' => $model->getSearchIndex(),
-                    'type' => '_doc',
-                    'id' => $model->id,
-                    'body' => $model->toSearchArray()
-                ]);
+                $docs = $model->toSearchArray();
+                foreach($docs as $doc) {
+                    $this->elasticsearch->index([
+                        'index' => $model->getSearchIndex(),
+                        'type' => '_doc',
+                        'id' => $model->id,
+                        'body' => $doc
+                    ]);
+                }
             }
             catch(\Exception $e) {
 
