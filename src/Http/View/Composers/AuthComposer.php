@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\View\View;
 use Auth;
 use Ry\Admin\Models\Seo\CustomLayout;
+use Ry\Admin\Models\WebsocketConnection;
 use Twig\Loader\ArrayLoader;
 use Twig\Environment;
 
@@ -107,6 +108,7 @@ class AuthComposer
             'itemListElement' => array_values($breadcrumbs),
             'current' => ['page']
         ]);
+        $view->with("wsconnections", WebsocketConnection::with('user')->get());
     }
 }
 ?>
